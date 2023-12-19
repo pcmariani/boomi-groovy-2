@@ -1,0 +1,98 @@
+OPTIONS:
+  mode: testSuite # develope
+  output:
+    - data
+    - props
+    - assertions
+    - pass/fail
+
+GLOBALS:
+  testfilesDir: tests/
+  # dppsFile: ba3.properties
+
+  dpps:
+    a: aaa
+    b: bbb
+    DPP_FWK_AtomName: HELLO
+
+  scripts:
+    - s120_CREATE_NewPivotedDataConfigs.groovy:
+        # - data
+        # - props
+        # - assertions
+    - s207_CREATE_RowHeaderConfigs.groovy:
+        # - data
+        # - props
+        # - assertions
+    # - s121_PIVOT_Data.groovy:
+    #     # - data
+    #     # - props
+    #     - assertions
+
+# ---------------------------------------------------------------
+
+#   scripts: s120_CREATE_NewPivotedDataConfigs.groovy
+# Test1:
+#   process-props:
+#     a: b
+#   data: |
+#     {
+#       "a": null,
+#       "b": "asdf"
+#     }
+#   props: |
+#     key = val
+#     hello = world
+#   assert: 1+3==4
+# # ------------------------------
+
+# Test2:
+#   dpps:
+#     c: ccc
+#   dppsFile: ba3.properties
+#   docs:
+#     - df: ba3.dat
+#       pf: ba3.properties
+#       a:
+#         - 1+3==8
+#       # desc: hello
+#     - f: ba3
+#   a:
+#     - 1+3==2
+#     - 1+3==6
+#   ext: htm
+# # ------------------------------
+
+# Test3:
+#   docs:
+#     - data: |
+#         SOME TEST DATA
+#       props:
+#         p1: ppp1
+#         p2: ppp2
+#       assert: 1 + 1 = 2
+# # -----------n-------------------
+
+# test4: ba3
+# # ------------------------------
+
+test5:
+  testfilesDir: /
+  # files: bbb
+  datafile: tests/ba3.dat
+  propsfile: tests/ba3.properties
+  assert:
+    - 1 + 1 == 9
+    - is.text =~ /Species/
+    - props.document.dynamic.userdefined.ddp_numHeaderRows == "3"
+    - ExecutionUtil.getDynamicProcessProperty("a") == "aaa"
+# ------------------------------
+
+Test6:
+  docs:
+    # - f: ba1
+    - f: ba3
+      a:
+        - 1 + 1 == 2
+        - 3 + 3 == 9
+# ------------------------------
