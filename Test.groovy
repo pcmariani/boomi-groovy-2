@@ -42,7 +42,7 @@ class Test {
       if (k == test.scripts.size() - 1) {
         script = script
           .replaceFirst(/(.*dataContext.storeStream.*)/,
-            "\$1; dataContext.evalAssertions(i, ExecutionUtil); ")
+            "\$1; dataContext.evalAssertions(i, ExecutionUtil); "
       }
 
       if (opts.printMode == "testResultsOnly") {
@@ -80,12 +80,12 @@ class Test {
           .replaceFirst(/(.*dataContext.storeStream.*)/,
           "\$1; dataContext.printAssertions(i); ")
         }
-      }
 
-      if (k == test.scripts.size() - 1) {
-        script = script
-        .replaceFirst(/(.*dataContext.storeStream.*)/,
-        "\$1; if (dataContext.getExtension(i)) dataContext.writeFile(i, \"$test.testfilesDir\", \"$test.desc\", \"$scriptObj.name\"); ")
+        if (k == test.scripts.size() - 1) {
+          script = script
+          .replaceFirst(/(.*dataContext.storeStream.*)/,
+          "\$1; if (dataContext.getExtension(i)) dataContext.writeFile(i, \"${this.opts.workingDir}\", \"$test.desc\", \"$scriptObj.name\"); ")
+        }
       }
 
       Eval.xyz(
