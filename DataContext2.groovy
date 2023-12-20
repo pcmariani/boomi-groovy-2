@@ -98,7 +98,7 @@ class DataContext2 {
         } catch(AssertionError assertionError) {
           this.hasFailedAssertions = true
           assertionObj.passed = false
-          assertionObj.error = assertionError.toString()
+          assertionObj.error = assertionError.toString().take(400)
         }
         dc.is.reset()
       }
@@ -136,13 +136,27 @@ class DataContext2 {
       println ""
     }
 
-    void writeFile(int index, String testfilesDir, String testDesc, String scriptDesc) {
-      def docDesc = this.dataContextArr[dcIndex].desc.replaceFirst(/\..*$/, "")
+    void writeFile(int index, String workingDir, String testDesc, String scriptDesc) {
+      def docDesc = this.dataContextArr[dcIndex].desc.replaceFirst(/(?:^|.*?)(\w+)\..*$/, "\$1")
       def ext = this.dataContextArr[dcIndex].extension
-      def fileName = "OUT${index.toString().padLeft(2,"0")}__${testDesc.take(12)}__${scriptDesc.replaceFirst(".groovy","")}__${docDesc}.${ext.replaceFirst("\\.","")}"
+      def fileName = "$workingDir/OUT${index.toString().padLeft(2,"0")}__${testDesc.take(12)}__${scriptDesc.replaceFirst(".groovy","")}__${docDesc}.${ext.replaceFirst("\\.","")}"
       def is = this.dataContextArr[dcIndex].is
-      File dataFile = new File(testfilesDir + "/" + fileName.replaceAll(" ", "_"))
-      dataFile.write is.text
+      File dataFile = new File(fileName.replaceAll(" ", "_"))
+      def html_out = '''<!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta http-equiv="X-UA-Compatible" content="ie=edge">
+          <title>My Website</title>
+          <link rel="stylesheet" href="./style.css">
+          <link rel="icon" href="./favicon.ico" type="image/x-icon">
+        </head>
+        <body>''' + is.text + 
+        '''</body>
+      </html>
+      '''
+      dataFile.write html_out
       is.reset()
     }
 
