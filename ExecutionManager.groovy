@@ -16,11 +16,13 @@ class ExecutionManager {
     LinkedHashMap testSuite = [suiteName:testFile, suiteFailed: false]
 
     def testsFileRoot = new Yaml().load(("$workingDir/$testFile" as File).text)
-    LinkedHashMap OPTIONS = testsFileRoot.remove('OPTIONS')
-    LinkedHashMap GLOBALS = parseGlobals(testsFileRoot.remove('GLOBALS'))
+    LinkedHashMap OPTIONS = testsFileRoot.remove('OPTIONS') ?: [:]
+    LinkedHashMap GLOBALS = parseGlobals(testsFileRoot.remove('GLOBALS')) ?: [:]
     // println GLOBALS
+    testSuite.globals = GLOBALS
 
     OPTIONS.printMode = printMode
+    OPTIONS.workingDir = workingDir
 
     ArrayList tests = []
 
@@ -41,7 +43,6 @@ class ExecutionManager {
   }
 
   void printResults() {
-    println ""
     this.testSuites.each { ts ->
       if (ts.suiteFailed) {
         Fmt.p("redReverse", " FAIL ")
@@ -50,21 +51,31 @@ class ExecutionManager {
       }
       Fmt.pl("white", " " + ts.suiteName)
 
+      println ""
+      def globalScripts = getExecutionScripts(null, ts.globals.scriptfiles)?.name
+      Fmt.pl("white", "  Scripts")
+      globalScripts.each { script ->
+        Fmt.pl("magenta", "     " + script)
+      }
+
+      println ""
+
+      Fmt.pl("white", "  Tests")
       ts.tests.each { t ->
-        print "  "
+        print "    "
         if (t.testFailed) {
           Fmt.p("red", "✗ ")
         } else {
           Fmt.p("green", "✓ ")
         }
-        Fmt.pl("white", " " + t.testName)
+        Fmt.pl("yellow", " " + t.testName)
 
         t.documents.each { doc ->
-          print "      "
+          print "        "
           Fmt.pl("white", " " + doc.desc)
           if (doc.assertions) {
             doc.assertions.each { a ->
-              print "         "
+              print "           "
               if (a.passed) {
                 Fmt.p("green", "✓ ")
               } else {
@@ -73,7 +84,7 @@ class ExecutionManager {
               Fmt.pl("grey", " " + a.assert)
             }
           } else {
-              print "         "
+              print "           "
               Fmt.pl("grey", "－ no assertions")
           }
           
@@ -151,7 +162,7 @@ class ExecutionManager {
     }
     global.ProcessProps = GLOBALS.'process-props' ?: GLOBALS.dpps
     global.DPPsFile = GLOBALS.processPropsFile ?: GLOBALS.dppsFile
-    global.testfilesDir = GLOBALS.testfilesDir ?: GLOBALS.tfDir ?: ""
+    global.testfilesDir = GLOBALS.testfilesDir ?: GLOBALS.tfDir ?: "."
     return global
   }
   
@@ -159,6 +170,7 @@ class ExecutionManager {
   private def parseTestYaml(GLOBALS, testYaml) {
     def desc = testYaml.key
     def test = testYaml.value
+    // println test
 
     def dataContext = new DataContext2()
 
@@ -198,6 +210,8 @@ class ExecutionManager {
       }
 
       test.docs.eachWithIndex { doc, m ->
+        // if (doc.testfilesDir) println "DFT " + doc.testfilesDir
+
         def tfd = doc.testfilesDir ?: doc.tfDir ?: GLOBALS.testfilesDir
 
         dataContext.storeStream(
@@ -345,14 +359,14 @@ class ExecutionManager {
      String propsSubDir = propsfile ? propsfile.replaceFirst(/(.*)[\/\\].*/, "\$1") : ""
      properties.each { k,v ->
        if (v =~/@file/) {
-         String filename = v.replaceFirst(/\s*@file\s*(.*?)\s*/, "\$1")
+         String filename = v.replaceFirst(/\s*@file\s*\(?'?(.*?)'?\)?$/, "\$1")
          properties.setProperty(k, new FileReader("$workingDir/$propsSubDir/$filename").text)
        }
      }
      // if (type == "DPP") properties.each { println "DPP: " + it}
      // if (type == "ddp") properties.each { println "ddp: " + it}
-     return properties
    }
+   return properties
  }
 
 
