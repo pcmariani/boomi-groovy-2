@@ -1,7 +1,7 @@
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput;
 
-class Boomi-groovy {
+class Boomi_groovy {
   static void main(String[] args) throws Exception {
 
     def cli = new CliBuilder(usage: 'boomi-groovy-test.groovy [-h] -t file -s script [-d document]')
@@ -9,6 +9,7 @@ class Boomi-groovy {
     cli.with {
       h  longOpt: 'help', 'Show usage'
       t  longOpt: 'testfile', args: 1, argName: 'testFile', 'test file'
+      m  longOpt: 'mode', args: 1, argName: 'mode', 'Mode'
       xa longOpt: 'suppress-all-output', type: boolean, 'Suppress all output'
       xd longOpt: 'suppress-data-output', type: boolean, 'Suppresses output of data'
       xp longOpt: 'suppress-props-output', type: boolean, 'Suppresses output of props'
@@ -22,14 +23,20 @@ class Boomi-groovy {
       return
     }
 
+
     String workingDir = options.w ? options.w : System.getProperty("user.dir")
     ArrayList testFiles = [options.t ? options.t : null]
 
     ExecutionManager executionManager = new ExecutionManager(workingDir)
 
     testFiles.each { testFile ->
-      executionManager.runTestSuite(testFile)
+      executionManager.runTestSuite(options.m, testFile)
     }
+
+    if (options.m == "testResultsOnly") {
+      executionManager.printResults()
+    }
+  
 
   }
 
