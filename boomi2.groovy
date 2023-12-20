@@ -1,7 +1,7 @@
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput;
 
-class B2 {
+class Boomi-groovy {
   static void main(String[] args) throws Exception {
 
     def cli = new CliBuilder(usage: 'boomi-groovy-test.groovy [-h] -t file -s script [-d document]')
