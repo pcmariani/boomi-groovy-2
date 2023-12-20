@@ -8,7 +8,7 @@ workingDir="$(pwd)"
 
 pushd $BOOMI_GROOVY_HOME >/dev/null
 
-groovy "$BOOMI_GROOVY_HOME"/"$nameOfBoomiGroovyScript" $@ -w "$workingDir"
+groovy "$BOOMI_GROOVY_HOME"/"$nameOfBoomiGroovyScript" -t $@ -w "$workingDir" -m "hello"
 exitCode="$?"
 
 popd >/dev/null
