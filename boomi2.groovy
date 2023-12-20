@@ -23,6 +23,9 @@ class Boomi_groovy {
       return
     }
 
+    // TODO: allow assertions to have descriptions
+    // TODO: don't println inline. Capture println statements
+    // TODO: change datafile, propsfile to just data: file, props: file
 
     String workingDir = options.w ? options.w : System.getProperty("user.dir")
     ArrayList testFiles = [options.t ? options.t : null]
