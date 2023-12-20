@@ -11,7 +11,7 @@ class ExecutionManager {
     this.workingDir = workingDir
   }
 
-  public void runTestSuite(String testFile) {
+  public void runTestSuite(String printMode, String testFile) {
 
     LinkedHashMap testSuite = [suiteName:testFile, suiteFailed: false]
 
@@ -19,6 +19,8 @@ class ExecutionManager {
     LinkedHashMap OPTIONS = testsFileRoot.remove('OPTIONS')
     LinkedHashMap GLOBALS = parseGlobals(testsFileRoot.remove('GLOBALS'))
     // println GLOBALS
+
+    OPTIONS.printMode = printMode
 
     ArrayList tests = []
 
@@ -36,12 +38,11 @@ class ExecutionManager {
     testSuite.tests = tests
     
     testSuites << testSuite
-    printResults(testSuites)
   }
 
-  void printResults(testSuites) {
-
-    testSuites.each { ts ->
+  void printResults() {
+    println ""
+    this.testSuites.each { ts ->
       if (ts.suiteFailed) {
         Fmt.p("redReverse", " FAIL ")
       } else {
@@ -102,6 +103,7 @@ class ExecutionManager {
     Fmt.p("red", numTestsFailed ? numTestsFailed + " failed" : "")
     Fmt.p("white", numTestsFailed ? ", " : "")
     Fmt.p("white", numTests + " total")
+    println ""
     println ""
   }
 
