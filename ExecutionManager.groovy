@@ -16,7 +16,7 @@ class ExecutionManager {
     LinkedHashMap testSuite = [suiteName:testFile, suiteFailed: false]
 
     def testsFileRoot = new Yaml().load(("$workingDir/$testFile" as File).text)
-    LinkedHashMap OPTIONS = testsFileRoot.remove('OPTIONS') ?: [:]
+    LinkedHashMap OPTIONS = [userOpts: testsFileRoot.remove('OPTIONS')] ?: [:]
     LinkedHashMap GLOBALS = parseGlobals(testsFileRoot.remove('GLOBALS')) ?: [:]
     // println GLOBALS
     testSuite.globals = GLOBALS
@@ -26,8 +26,11 @@ class ExecutionManager {
 
     ArrayList tests = []
 
-    testsFileRoot.each { testYaml ->
-      tests << runTest(OPTIONS, GLOBALS, testYaml)
+    if (OPTIONS.printMode != "testResultsOnly" && OPTIONS.userOpts?.disjoint(["nothing"])) {
+      println ""
+    }
+    testsFileRoot.eachWithIndex { testYaml, index ->
+      tests << runTest(OPTIONS, GLOBALS, testYaml, index)
 
       testSuite.numFailedTests = tests.testFailed.count(true)
       testSuite.numPassedTests = tests.testFailed.count(false)
@@ -37,12 +40,46 @@ class ExecutionManager {
         testSuite.suiteFailed = true
       }
     }
+    if (OPTIONS.printMode != "testResultsOnly" && OPTIONS.userOpts?.disjoint(["nothing"])) {
+      println ""
+    }
     testSuite.tests = tests
     
     testSuites << testSuite
   }
 
+
+  public def runTest(OPTIONS, GLOBALS, testYaml, index) {
+      def t = parseTestYaml(OPTIONS, GLOBALS, testYaml, index)
+      // peekT(t)
+      def testResults = new Test(OPTIONS, t.desc, t.scripts, t.dpps, t.dataContext, t.index).run()
+      def dc = testResults.dataContext
+
+      // testResults.scripts.each {
+      //   println it.name
+      //   if (it.error) println it.error.replaceAll(/\s*at (?!Script1).*/,"").replaceFirst(/\n.*at .*?(groovy:\d+).*\n/," (\$1)")
+      //   println ""
+      //
+      // }
+
+      return [
+        testName: t.desc,
+        testFailed: true in dc.hasFailedAssertions || testResults.hasFailedExec ? true : false,
+        hasFailedExec: testResults.hasFailedExec,
+        testScripts: testResults.scripts,
+        testError: testResults.execError,
+        documents: dc.dataContextArr.collect{ it.subMap(["desc", "assertions"])}
+      ]
+  }
+
+
   void printResults() {
+    def l1 = "  "
+    def l2 = "     "
+    def l3 = "       "
+    def l4 = "          "
+    def l5 = "            "
+    def l6 = "              "
     this.testSuites.each { ts ->
       if (ts.suiteFailed) {
         Fmt.p("redReverse", " FAIL ")
@@ -52,42 +89,71 @@ class ExecutionManager {
       Fmt.pl("white", " " + ts.suiteName)
 
       println ""
-      def globalScripts = getExecutionScripts(null, ts.globals.scriptfiles)?.name
-      Fmt.pl("white", "  Scripts")
+      def globalScripts = getExecutionScripts(null, null, ts.globals.scriptfiles)?.name
+      Fmt.pl("grey", l1 + (globalScripts.size() == 1 ? "Script" : "Scripts") )
       globalScripts.each { script ->
-        Fmt.pl("magenta", "     " + script)
+        Fmt.pl("magenta", l2 + script)
       }
 
       println ""
 
-      Fmt.pl("white", "  Tests")
+      // Fmt.pl("white", "  Tests")
       ts.tests.each { t ->
-        print "    "
+        print l1
         if (t.testFailed) {
-          Fmt.p("red", "✗ ")
+          Fmt.p("red", "✗  ")
         } else {
-          Fmt.p("green", "✓ ")
+          Fmt.p("green", "✓  ")
         }
-        Fmt.pl("yellow", " " + t.testName)
+        Fmt.pl("yellow", t.testName)
 
-        t.documents.each { doc ->
-          print "        "
-          Fmt.pl("white", " " + doc.desc)
-          if (doc.assertions) {
-            doc.assertions.each { a ->
-              print "           "
-              if (a.passed) {
-                Fmt.p("green", "✓ ")
-              } else {
-                Fmt.p("red", "✗ ")
-              }
-              Fmt.pl("grey", " " + a.assert)
+        t.documents.eachWithIndex { doc, m ->
+
+            if (t.testError?.docIndex == m) {
+
+              def e = t.testError
+              print l3
+              Fmt.pl("white", m + " " + e.docName)
+
+              print l4 
+              Fmt.p("grey", "Exception in Script:")
+              // print "          "
+              Fmt.pl("magenta", " " + e.script)
+              print l5
+              Fmt.pl("red", e.error
+              .replaceAll(/\n\s*at (?!Script1).*/,"")
+              .replaceFirst(/(Exception:) /, "\$1\n$l6")
+              .replaceFirst(/\n.*at .*?(groovy:\d+).*/," (\$1)")
+              .replaceFirst(/\n$/,"")
+              )
+
             }
-          } else {
-              print "           "
+
+            else {
+
+            print l3
+            Fmt.pl("white", m + " " + doc.desc)
+
+            if (doc.assertions) {
+              doc.assertions.each { a ->
+                print l4
+                if (a.passed == true) {
+                  Fmt.p("green", "✓ ")
+                  Fmt.pl("grey", " " + a.assert)
+                } else if (a.passed == false) {
+                  Fmt.p("red", "✗ ")
+                  Fmt.pl("grey", " " + a.assert)
+                } else {
+                  Fmt.pl("grey", "－ " + a.assert + " (not evaluated)")
+                }
+              }
+
+            } else {
+              print l4
               Fmt.pl("grey", "－ no assertions")
+            }
           }
-          
+
         }
       }
     }
@@ -139,21 +205,6 @@ class ExecutionManager {
   }
 
 
-  public def runTest(OPTIONS, GLOBALS, testYaml) {
-      def t = parseTestYaml(GLOBALS, testYaml)
-      // peekT(t)
-      def testResults = new Test(OPTIONS, t.desc, t.scripts, t.dpps, t.dataContext).run()
-      def dc = testResults.dataContext
-
-      return [
-        testName: t.desc,
-        testFailed: dc.hasFailedAssertions,
-        testScripts: t.scripts.name,
-        documents: dc.dataContextArr.collect{ it.subMap(["desc", "assertions"])}
-      ]
-  }
-
-
   LinkedHashMap parseGlobals(GLOBALS) {
     def global = [:]
     global.scriptfiles = GLOBALS.scripts ?: GLOBALS.s
@@ -167,7 +218,7 @@ class ExecutionManager {
   }
   
 
-  private def parseTestYaml(GLOBALS, testYaml) {
+  private def parseTestYaml(OPTIONS, GLOBALS, testYaml, index) {
     def desc = testYaml.key
     def test = testYaml.value
     // println test
@@ -185,18 +236,19 @@ class ExecutionManager {
       )
 
       return [
-      desc: desc,
-      scripts: getExecutionScripts(null, GLOBALS.scriptfiles),
-      dpps: loadProps(
-        "DPP",
-        null,
-        GLOBALS.ProcessProps,
-        GLOBALS.DPPsFile ? "$GLOBALS.testfilesDir/$GLOBALS.DPPsFile"
-        : "${GLOBALS.testfilesDir}/${test}.properties" ?: null
-      ),
-      dataContext: dataContext,
-      assertions: null,
-      testfilesDir: GLOBALS.testfilesDir ?: ""
+        index: index,
+        desc: desc,
+        scripts: getExecutionScripts(OPTIONS, null, GLOBALS.scriptfiles),
+        dpps: loadProps(
+          "DPP",
+          null,
+          GLOBALS.ProcessProps,
+          GLOBALS.DPPsFile ? "$GLOBALS.testfilesDir/$GLOBALS.DPPsFile"
+          : "${GLOBALS.testfilesDir}/${test}.properties" ?: null
+        ),
+        dataContext: dataContext,
+        assertions: null,
+        testfilesDir: GLOBALS.testfilesDir ?: ""
       ]
     }
 
@@ -245,8 +297,10 @@ class ExecutionManager {
       def tfd = test.testfilesDir ?: test.tfDir ?: GLOBALS.testfilesDir
 
       return [
+        index: index,
         desc: desc,
         scripts: getExecutionScripts(
+          OPTIONS,
           tfd,
           test.scripts ?: test.s ?: GLOBALS.scriptfiles
         ),
@@ -272,7 +326,8 @@ class ExecutionManager {
 
 
 
- private def getExecutionScripts(tfd, scriptfiles) {
+ private def getExecutionScripts(OPTIONS, tfd, scriptfiles) {
+   // println OPTIONS
    def scriptsArr = []
    if (scriptfiles instanceof String) {
      scriptfiles = [scriptfiles] as ArrayList
@@ -292,7 +347,7 @@ class ExecutionManager {
        scriptsArr << [
          name: scriptfileName,
          script: new FileInputStream("$workingDir/$scriptfileName"),
-         output: scriptArgs ?: [], //+ (m == scriptfiles.size() - 1 ? ["assertions"] : [])
+         output: scriptArgs ?: []
        ]
      }
    }
