@@ -1,10 +1,10 @@
 OPTIONS:
-  mode: testSuite # develope
-  output:
-    - data
-    - props
-    - assertions
-    - pass/fail
+  # - no data
+  # - no props
+  # - no assertions
+  # - no results
+  # - no println
+  # - nothing
 
 GLOBALS:
   testfilesDir: tests/
@@ -17,13 +17,14 @@ GLOBALS:
 
   scripts:
     - s120_CREATE_NewPivotedDataConfigs.groovy:
-        # - data
-        # - props
-        # - assertions
-    - s207_CREATE_RowHeaderConfigs.groovy:
-        # - data
-        # - props
-        # - assertions
+        # - no results
+      # - data
+      # - props
+      # - assertions
+    - s207_CREATE_RowHeaderConfigs.groovy
+      # - data
+      # - props
+      # - assertions
     # - s121_PIVOT_Data.groovy:
     #     # - data
     #     # - props
@@ -82,7 +83,7 @@ test5:
   datafile: tests/ba3.dat
   propsfile: tests/ba3.properties
   assert:
-    - 1 + 1 == 9
+    # - 1 + 1 == 9
     - is.text =~ /Species/
     - props.document.dynamic.userdefined.ddp_numHeaderRows == "3"
     - ExecutionUtil.getDynamicProcessProperty("a") == "aaa"
@@ -90,7 +91,7 @@ test5:
 
 Test6:
   docs:
-    # - f: ba1
+    # - df: ba1.dat
     - f: ba3
       a:
         - 1 + 1 == 2
