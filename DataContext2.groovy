@@ -51,9 +51,9 @@ class DataContext2 {
     return this.dataContextArr[index]?.desc
   }
 
-  // String getExtension(int index) {
-  //   return this.dataContextArr[index]?.extension
-  // }
+  String getExtension(int index) {
+    return this.dataContextArr[index]?.extension
+  }
 
   // Boolean getHasFailedAssertions() {
   //   // println this.dataContextArr?.hasFailedAssertions
@@ -127,7 +127,8 @@ class DataContext2 {
 
   void printData(int index) {
     def is = this.dataContextArr[index]?.is
-    println Color.yellow + is?.text + Color.off
+    // println Color.yellow + is?.text + Color.off
+    println is?.text
     is.reset()
   }
 
@@ -146,7 +147,17 @@ class DataContext2 {
     }
     def docDesc = this.dataContextArr[dcIndex].desc.replaceFirst(/(?:^|.*?)(\w+)\..*$/, "\$1")
     def ext = this.dataContextArr[dcIndex].extension
-    def fileName = "$outFilesDirName/OUT${index.toString().padLeft(2,"0")}__${testDesc.take(12)}__${scriptDesc.replaceFirst(".groovy","")}__${docDesc}.${ext.replaceFirst("\\.","")}"
+    // def fileName = "$outFilesDirName/OUT${index.toString().padLeft(2,"0")}__${testDesc.take(12)}__${scriptDesc.replaceFirst(".groovy","")}__${docDesc}.${ext.replaceFirst("\\.","")}"
+    def fileName = "$outFilesDirName/" +
+      "OUT" +
+      "__" +
+      "${scriptDesc.replaceFirst(".groovy","")}" +
+      "__" +
+      "${testDesc.take(12)}" +
+      "__" +
+      "${index.toString().padLeft(2,"0")}" +
+      "${docDesc}" +
+      ".${ext.replaceFirst("\\.","")}"
     def is = this.dataContextArr[dcIndex].is
     File dataFile = new File(fileName.replaceAll(" ", "_"))
     def html_out = '''<!DOCTYPE html>
