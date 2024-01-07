@@ -20,12 +20,13 @@ class Test {
     def outg = opts.userOpts ?: []
     // println outg
 
-    if (this.test.index > 0 && outg.disjoint(["nothing"])) {
+    if (this.test.index > 0 && outg.disjoint(["nothing", "no guides"])) {
       println ""
       println Color.green + "-------------------------------------------------------------------------" + Color.off
       println ""
     }
-    if (opts.printMode != "testResultsOnly") {
+    if (opts.printMode != "testResultsOnly" && outg.disjoint(["no guides"])) {
+      Fmt.p("blue", "TEST: ")
       Fmt.pl("blue", test.desc)
     }
 
@@ -44,15 +45,16 @@ class Test {
       // println out
 
       if (opts.printMode != "testResultsOnly") {
-        if (out.disjoint(["nothing"])) {
+        if (out.disjoint(["nothing", "no guides"])) {
           println ""
         }
-        if (out.disjoint(["nothing"])) {
+        if (out.disjoint(["nothing", "no guides"])) {
           Fmt.p("magenta", scriptObj.name)
-          Fmt.pl("blue", " - " + test.desc)
-        } else {
-          Fmt.pl("magenta", scriptObj.name)
-        }
+          Fmt.pl("grey", " - " + test.desc)
+        } 
+        // else {
+        //   Fmt.pl("magenta", scriptObj.name)
+        // }
         // println Color.blue + "TEST: " + Color.magenta + test.desc + Color.off
         // println Color.blue + "SCRIPT: " + Color.magenta + scriptObj.name + Color.off
       }
@@ -75,7 +77,7 @@ class Test {
       // opts.printMode = "testResultsOnly"
       if (opts.printMode != "testResultsOnly") {
         // Document Number
-        if (out.disjoint(["nothing"])) {
+        if (out.disjoint(["nothing", "no guides"])) {
           script = script
           .replaceFirst(/(.*dataContext.getDataCount\(\).*)/,
           "\$1; if (dataContext.getDataCount() > 1) println \"${Color.blue}DOCUMENT\" + i.toString() + \": ${Color.magenta}\" + dataContext.getDesc(i) + \"${Color.off}\"")
@@ -133,9 +135,14 @@ class Test {
           docName: dataContext.dataContextArr[dataContext.dcIndex].desc,
           error: sw.toString()
         ]
+
         // def padChar = "| "
         // println padChar + sw.toString().replaceAll(/\n/, "\n$padChar ").replaceAll(/\n.*?\(Unknown Source\)\n/, "\n").replaceFirst(/\$padChar\s*$/,"")
-        // System.exit(1)
+
+        if (opts.printMode != "testResultsOnly") {
+          println sw.toString()
+          System.exit(1)
+        }
 
         // dataContext.close()
         break
