@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-nameOfBoomiGroovyScript="boomi2.groovy"
+nameOfBoomiGroovyScript="BoomiGroovy.groovy"
 
 workingDir="$(pwd)"
 # echo "workdingDir: $workingDir"
