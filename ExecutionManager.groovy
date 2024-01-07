@@ -26,7 +26,7 @@ class ExecutionManager {
 
     ArrayList tests = []
 
-    if (OPTIONS.printMode != "testResultsOnly" && OPTIONS.userOpts?.disjoint(["nothing"])) {
+    if (OPTIONS.printMode != "testResultsOnly" && OPTIONS.userOpts?.disjoint(["nothing", "no guides"])) {
       println ""
     }
     testsFileRoot.eachWithIndex { testYaml, index ->
@@ -40,7 +40,7 @@ class ExecutionManager {
         testSuite.suiteFailed = true
       }
     }
-    if (OPTIONS.printMode != "testResultsOnly" && OPTIONS.userOpts?.disjoint(["nothing"])) {
+    if (OPTIONS.printMode != "testResultsOnly" && OPTIONS.userOpts?.disjoint(["nothing", "no guides"])) {
       println ""
     }
     testSuite.tests = tests
