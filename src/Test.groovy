@@ -112,10 +112,10 @@ class Test {
           "\$1; dataContext.printAssertions(i); ")
         }
 
-        if (k == test.scripts.size() - 1) {
+        if (k == this.scripts.size() - 1) {
           script = script
           .replaceFirst(/(.*dataContext.storeStream.*)/,
-          "\$1; if (dataContext.getExtension(i)) dataContext.writeFile(i, \"${this.opts.workingDir}\", \"$test.desc\", \"$scriptObj.name\"); ")
+          "\$1; if (dataContext.getExtension(i)) dataContext.writeFile(i, \"${GlobalOptions.workingDir}\", \"$test.desc\", \"$scriptObj.name\"); ")
         }
       }
 
