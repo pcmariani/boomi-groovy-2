@@ -160,25 +160,30 @@ class DataContext2 {
       ".${ext.replaceFirst("\\.","")}"
     def is = this.dataContextArr[dcIndex].is
     File dataFile = new File(fileName.replaceAll(" ", "_"))
-    def html_out = '''<!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <meta http-equiv="X-UA-Compatible" content="ie=edge">
-          <title>My Website</title>
-          <link rel="stylesheet" href="./style.css">
-          <link rel="icon" href="./favicon.ico" type="image/x-icon">
-        </head>
-        <body>''' + is.text + '''</body>
-      </html>
-    '''
-    dataFile.write html_out
+    if (ext == "html" || ext == "htm") {
+      def html_out = '''<!DOCTYPE html>
+        <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta http-equiv="X-UA-Compatible" content="ie=edge">
+            <title>My Website</title>
+            <link rel="stylesheet" href="./style.css">
+            <link rel="icon" href="./favicon.ico" type="image/x-icon">
+          </head>
+          <body>''' + is.text + '''</body>
+        </html>
+      '''
+      dataFile.write html_out
+    }
+    else {
+      dataFile.write is.text
+    }
     is.reset()
   }
 
-  void close() {
-    this.dataContextArr = []
-    this.dcIndex = -1
-  }
+  // void close() {
+  //   this.dataContextArr = []
+  //   this.dcIndex = -1
+  // }
 }
