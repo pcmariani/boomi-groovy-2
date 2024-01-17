@@ -2,27 +2,37 @@
 import org.yaml.snakeyaml.Yaml
 
 class TestSuite {
-  LinkedHashMap OPTS
-  LinkedHashMap testSuiteYaml
+  LinkedHashMap testSuiteFileRaw
   LinkedHashMap GLOBALS
   ArrayList tests
   Boolean suiteFailed
   int numTests
   int numPassedTests
   int numFailedTests
+  String testSuiteFileName
 
-  TestSuite(LinkedHashMap OPTS) {
-    this.OPTS = OPTS
+  TestSuite(String testSuiteFileName) {
+    this.testSuiteFileName = testSuiteFileName
 
-    def testSuiteFilePath = "${OPTS.workingDir}/${OPTS.testSuiteFileName}"
-    this.testSuiteYaml = new Yaml().load((testSuiteFilePath as File).text)
+    def testSuiteFilePath = "${GlobalOptions.workingDir}/${testSuiteFileName}"
+    this.testSuiteFileRaw = new Yaml().load((testSuiteFilePath as File).text)
 
-    this.OPTS << [userOpts: testSuiteYaml.remove('OPTIONS')] ?: [:]
-    this.GLOBALS = parseGlobals(testSuiteYaml.remove('GLOBALS')) ?: [:]
+    GlobalOptions.suiteOpts = testSuiteFileRaw.remove('OPTIONS') ?: [:]
+    this.GLOBALS = parseGlobals(testSuiteFileRaw.remove('GLOBALS')) ?: [:]
 
     this.tests = []
-    testSuiteYaml.eachWithIndex { testYaml, index ->
-       this.tests << parseTestYaml(testYaml, index)
+    testSuiteFileRaw.eachWithIndex { testRaw, index ->
+
+      TestSuiteFileMapper mappedTest = new TestSuiteFileMapper(GLOBALS, testRaw, index)
+      mappedTest.transformTestYaml()
+
+      this.tests << new Test(
+        mappedTest.desc,
+        mappedTest.scripts,
+        mappedTest.dpps,
+        mappedTest.dataContext,
+        mappedTest.index
+      )
     }
   }
 
@@ -40,250 +50,104 @@ class TestSuite {
 
   public def run() {
 
-    tests.each { t ->
-      def testResults = new Test(OPTS, t.desc, t.scripts, t.dpps, t.dataContext, t.index).run()
-      def dc = testResults.dataContext
-      t.testFailed = true in dc.hasFailedAssertions || testResults.hasFailedExec ? true : false
-      t.hasFailedExec = testResults.hasFailedExec
-      t.testError = testResults.execError
-      // t.each { println it; println ""}
+    tests.each { test ->
+      test.run()
     }
 
     this.numFailedTests = tests.testFailed.count(true)
     this.numPassedTests = tests.testFailed.count(false)
     this.numTests = tests.testFailed.size()
+    this.suiteFailed = numFailedTests > 0 ? true : false
 
-    if (true in tests.testFailed) {
-      this.suiteFailed = true
-    }
-    println "I've been run"
+    // if (true in tests.testFailed) {
+    //   this.suiteFailed = true
+    // }
+
   }
 
-  private def parseTestYaml(testYaml, index) {
-    def desc = testYaml.key
-    def test = testYaml.value
+  public def printResult() {
+    if (this.suiteFailed) {
+      Fmt.p("redReverse", " FAIL ")
+    } else {
+      Fmt.p("greenReverse", " PASS ")
+    }
+    Fmt.pl("white", " " + testSuiteFileName)
 
-    def dataContext = new DataContext2()
+    println ""
 
-    if (test instanceof String) {
-
-      dataContext.storeStream(
-        test,
-        getDocumentContents(null, "${GLOBALS.testfilesDir}/${test}.dat"),
-        loadProps("ddp", null, null, "${GLOBALS.testfilesDir}/${test}.properties"),
-        null,
-        null
-      )
-
-      return [
-        index: index,
-        desc: desc,
-        scripts: getExecutionScripts(null, GLOBALS.scriptfiles),
-        dpps: loadProps(
-          "DPP",
-          null,
-          GLOBALS.ProcessProps,
-          GLOBALS.DPPsFile ? "$GLOBALS.testfilesDir/$GLOBALS.DPPsFile"
-          : "${GLOBALS.testfilesDir}/${test}.properties" ?: null
-        ),
-        dataContext: dataContext,
-        assertions: null,
-        testfilesDir: GLOBALS.testfilesDir ?: ""
-      ]
+    def globalScripts = this.GLOBALS.scriptfiles.collect { it instanceof LinkedHashMap ? it.keySet()[0] : it}
+    Fmt.pl("grey", Fmt.l1 + (globalScripts.size() == 1 ? "Script" : "Scripts") )
+    globalScripts.each { script ->
+      Fmt.pl("magenta", Fmt.l2 + script)
     }
 
-    else {
+    println ""
 
-      if (!test.docs) {
-        test.docs = [test.clone()]
-        test.remove("assertions")
-        test.remove("assert")
-        test.remove("a")
+    // Fmt.pl("white", "  Tests")
+
+    this.tests.each { t ->
+      print Fmt.l1
+      if (t.testFailed) {
+        Fmt.p("red", "✗  ")
+      } else {
+        Fmt.p("green", "✓  ")
       }
+      Fmt.pl("yellow", t.desc)
+      // println t.dataContext.dataContextArr
 
-      test.docs.eachWithIndex { doc, m ->
-        // if (doc.testfilesDir) println "DFT " + doc.testfilesDir
+      t.dataContext.dataContextArr.eachWithIndex { doc, m ->
 
-        def tfd = doc.testfilesDir ?: doc.tfDir ?: GLOBALS.testfilesDir
+        if (t.execError?.docIndex == m) {
 
-        dataContext.storeStream(
-          doc.desc ?: doc.files ?: doc.f ?: doc.datafile ?: doc.df ?: "Document " + m,
-          getDocumentContents(
-            doc.data ?: doc.d ?: null,
-            doc.files ? "$tfd/${doc.files}.dat"
-            : doc.f ? "$tfd/${doc.f}.dat"
-            : doc.datafile ? "$tfd/$doc.datafile"
-            : doc.df ? "$tfd/$doc.df"
-            : null
-          ),
-          loadProps(
-            "ddp",
-            null,
-            doc.props ?: doc.p ?: null,
-            doc.files ? "$tfd/${doc.files}.properties"
-            : doc.f ? "$tfd/${doc.f}.properties"
-            : doc.propsfile ? "$tfd/$doc.propsfile"
-            : doc.pf ? "$tfd/$doc.pf"
-            : null
-          ),
-          getAssertions(
-            doc.assert ?: doc.a ?: null,
-            test.assert ?: test.a ?: null
-          ),
-          doc.ext ?: doc.e ?: doc.extension ?: test.ext ?: test.e ?: test.extension ?: null
-        )
+          def e = t.testError
+
+          print Fmt.l3
+          Fmt.pl("white", m + " " + e.docName)
+
+          print Fmt.l4
+          Fmt.p("grey", "Exception in Script:")
+          Fmt.pl("magenta", " " + e.script)
+
+          print Fmt.l5
+          Fmt.pl("red", e.error
+            .replaceAll(/\n\s*at (?!Script1).*/,"")
+            .replaceFirst(/(Exception:) /, "\$1\n$Fmt.l6")
+            .replaceFirst(/\n.*at .*?(groovy:\d+).*/," (\$1)")
+            .replaceFirst(/\n$/,"")
+          )
+
+        }
+
+        else {
+
+          print Fmt.l3
+          Fmt.pl("white", m + " " + doc.desc)
+
+          if (doc.assertions) {
+            doc.assertions.each { a ->
+              print Fmt.l4
+              if (a.passed == true) {
+                Fmt.p("green", "✓ ")
+                Fmt.pl("grey", " " + a.assert)
+              } else if (a.passed == false) {
+                Fmt.p("red", "✗ ")
+                Fmt.pl("grey", " " + a.assert)
+              } else {
+                Fmt.pl("grey", "－ " + a.assert + " (not evaluated)")
+              }
+            }
+
+          } else {
+            print Fmt.l4
+            Fmt.pl("grey", "－ no assertions")
+          }
+        }
+
       }
-
-      def tfd = test.testfilesDir ?: test.tfDir ?: GLOBALS.testfilesDir
-
-      return [
-        index: index,
-        desc: desc,
-        scripts: getExecutionScripts(
-          tfd,
-          test.scripts ?: test.s ?: GLOBALS.scriptfiles
-        ),
-        dpps: loadProps(
-          "DPP",
-          GLOBALS.ProcessProps,
-          test.'process-props' ?: test.dpps ?: null,
-          test.processPropsFile ? "$tfd/$test.processPropsFile"
-          : test.dppsFile ? "$tfd/$test.dppsFile"
-          : test.files ? "$tfd/${test.files}.properties"
-          : test.f ? "$tfd/${test.f}.properties"
-          : test.propsfile ? "$tfd/$test.propsfile"
-          : test.pf ? "$tfd/$test.pf"
-          : GLOBALS.DPPsFile ? "$GLOBALS.testfilesDir/$GLOBALS.DPPsFile"
-          : null
-        ),
-        dataContext: dataContext,
-        testfilesDir: tfd
-      ]
-
     }
+    println ""
+
   }
-
-
-
- private def getExecutionScripts(tfd, scriptfiles) {
-   def scriptsArr = []
-   if (scriptfiles instanceof String) {
-     scriptfiles = [scriptfiles] as ArrayList
-   }
-   scriptfiles.eachWithIndex { scriptfile, m ->
-     if (scriptfile instanceof String) {
-       scriptsArr << [
-         name: scriptfile,
-         script: new FileInputStream("${OPTS.workingDir}/$scriptfile"),
-         output: m == scriptfiles.size() - 1 ? ["all"] : ["xx"],
-       ]
-     }
-     else if (scriptfile instanceof LinkedHashMap) {
-       def scriptfileName = scriptfile.keySet()[0]
-       def scriptArgs = scriptfile.values()[0]
-
-       scriptsArr << [
-         name: scriptfileName,
-         script: new FileInputStream("${OPTS.workingDir}/$scriptfileName"),
-         output: scriptArgs ?: []
-       ]
-     }
-   }
-   return scriptsArr
- }
-
-
-
- private InputStream getDocumentContents( String data, String datafile) {
-   if (datafile) {
-     return new FileInputStream("${OPTS.workingDir}/$datafile")
-   } else if (data) {
-     return new ByteArrayInputStream(data.getBytes("UTF-8"))
-   } else {
-     return new ByteArrayInputStream("".getBytes("UTF-8"))
-   }
- }
-
-
-
- private Properties loadProps(type, globalPropsStr, propsStr, propsfile) {
-   Properties properties = new Properties()
-   
-   // if (type == "DPP") println "DPP: " + globalPropsStr
-
-   if (propsfile) {
-     BufferedReader reader = new BufferedReader(new FileReader("${OPTS.workingDir}/$propsfile"));
-     String line
-     while ((line = reader.readLine()) != null) {
-       def propArr = line.split(/\s*=\s*/, 2)
-       if (line && !(line =~ /^\s*#/)) {
-         if (type == "DPP"
-           && !(line =~ /^\s*document\.dynamic\.userdefined\./)) {
-           properties.load(new StringReader(line))
-         }
-         else if (type == "ddp" 
-           && (line =~ /^\s*document\.dynamic\.userdefined\./)) {
-           properties.load(new StringReader(line))
-         }
-       }
-     }
-     reader.close();
-   }
-
-   if (globalPropsStr) {
-     if (globalPropsStr instanceof String) {
-       properties.load(new StringReader(globalPropsStr))
-     }
-     else if (globalPropsStr instanceof LinkedHashMap) {
-       properties.putAll(globalPropsStr)
-     }
-   }
-
-   if (propsStr) {
-     if (propsStr instanceof String) {
-       properties.load(new StringReader(propsStr))
-     }
-     else if (propsStr instanceof LinkedHashMap) {
-       properties.putAll(propsStr)
-     }
-   }
-
-   if (properties) {
-     String propsSubDir = propsfile ? propsfile.replaceFirst(/(.*)[\/\\].*/, "\$1") : ""
-     properties.each { k,v ->
-       if (v =~/@file/) {
-         String filename = v.replaceFirst(/\s*@file\s*\(?'?(.*?)'?\)?$/, "\$1")
-         properties.setProperty(k, new FileReader("${OPTS.workingDir}/$propsSubDir/$filename").text)
-       }
-     }
-     // if (type == "DPP") properties.each { println "DPP: " + it}
-     // if (type == "ddp") properties.each { println "ddp: " + it}
-   }
-   return properties
- }
-
-
-
-
- private def getAssertions(docAssertions, testAssertions) {
-   def assertionsArr = []
-   if (testAssertions instanceof String) {
-     assertionsArr << [assert: testAssertions]
-   } else {
-     testAssertions.each{ assertion ->
-       assertionsArr << [assert: assertion]
-     }
-   }
-   if (docAssertions instanceof String) {
-     assertionsArr << [assert: docAssertions]
-   } else {
-     docAssertions.each{ assertion ->
-       assertionsArr << [assert: assertion]
-     }
-   }
-   return assertionsArr
-   // return assertions instanceof String ? [assertions] : assertions
- }
 
 
 }
