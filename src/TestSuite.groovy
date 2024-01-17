@@ -1,5 +1,6 @@
 @Grab('org.yaml:snakeyaml:1.17')
 import org.yaml.snakeyaml.Yaml
+// import groovy.json.JsonSlurper
 
 class TestSuite {
   LinkedHashMap testSuiteFileRaw
@@ -15,7 +16,12 @@ class TestSuite {
     this.testSuiteFileName = testSuiteFileName
 
     def testSuiteFilePath = "${GlobalOptions.workingDir}/${testSuiteFileName}"
-    this.testSuiteFileRaw = new Yaml().load((testSuiteFilePath as File).text)
+
+    // if (GlobalOptions.testSuiteFileExt == "yaml") {
+      this.testSuiteFileRaw = new Yaml().load((testSuiteFilePath as File).text)
+    // } else if (GlobalOptions.testSuiteFileExt == "json") {
+    //   this.testSuiteFileRaw = new JsonSlurper.parseText((testSuiteFilePath as File).text)
+    // }
 
     GlobalOptions.suiteOpts = testSuiteFileRaw.remove('OPTIONS') ?: [:]
     this.GLOBALS = parseGlobals(testSuiteFileRaw.remove('GLOBALS')) ?: [:]
@@ -59,10 +65,11 @@ class TestSuite {
     this.numTests = tests.testFailed.size()
     this.suiteFailed = numFailedTests > 0 ? true : false
 
-    // if (true in tests.testFailed) {
-    //   this.suiteFailed = true
-    // }
+    if (GlobalOptions.mode == "testResultsOnly") {
+      this.printResult()
+    }
 
+    return this
   }
 
   public def printResult() {
