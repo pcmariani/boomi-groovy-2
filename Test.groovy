@@ -1,50 +1,51 @@
 class Test {
-  private def test = [:]
-  private def opts = [:]
+  private LinkedHashMap test = [:]
+  int index
+  String desc
+  ArrayList scripts = []
+  Properties dpps
+  DataContext2 dataContext
+  Boolean testFailed = false
+  Boolean hasFailedExec = false
+  LinkedHashMap execError
 
-  Test (LinkedHashMap OPTIONS, String desc, ArrayList scripts, Properties dpps, DataContext2 dataContext, int index) {
-    this.test = [
-      index: index,
-      desc: desc,
-      scripts: scripts,
-      dpps: dpps,
-      dataContext:dataContext,
-      hasFailedExec: false,
-      execError: null
-    ]
-    this.opts = OPTIONS
+  Test (String desc, ArrayList scripts, Properties dpps, DataContext2 dataContext, int index) {
+    this.index = index
+    this.desc = desc
+    this.scripts = scripts
+    this.dpps = dpps
+    this.dataContext = dataContext
   }
 
   def run() {
-
-    def outg = opts.userOpts ?: []
+    def outg = GlobalOptions.suiteOpts ?: []
     // println outg
 
-    if (this.test.index > 0 && outg.disjoint(["nothing", "no guides"])) {
-      println ""
-      println Color.green + "-------------------------------------------------------------------------" + Color.off
-      println ""
-    }
-    if (opts.printMode != "testResultsOnly" && outg.disjoint(["no guides"])) {
+    if (GlobalOptions.mode != "testResultsOnly" && outg.disjoint(["no guides"])) {
+      if (this.index > 0) {
+        println ""
+        println Fmt.green + "-------------------------------------------------------------------------" + Fmt.off
+        println ""
+      }
       Fmt.p("blue", "TEST: ")
-      Fmt.pl("blue", test.desc)
+      Fmt.pl("blue", this.desc)
     }
 
     def ExecutionUtil = new ExecutionUtilHelper()
-    ExecutionUtil.dynamicProcessProperties = this.test.dpps
+    ExecutionUtil.dynamicProcessProperties = this.dpps
 
-    def dataContext = this.test.dataContext
+    // def dataContext = this.dataContext
 
-    // this.test.scripts.eachWithIndex { scriptObj, k ->
-    for (int k = 0; k < this.test.scripts.size(); k++) {
+    // this.scripts.eachWithIndex { scriptObj, k ->
+    for (int k = 0; k < this.scripts.size(); k++) {
 
-      def scriptObj = this.test.scripts[k]
+      def scriptObj = this.scripts[k]
       // dataContext.setCurrentScriptName(scriptObj.name)
 
       ArrayList out = scriptObj.output + outg
       // println out
 
-      if (opts.printMode != "testResultsOnly") {
+      if (GlobalOptions.mode != "testResultsOnly") {
         if (out.disjoint(["nothing", "no guides"])) {
           println ""
         }
@@ -55,32 +56,32 @@ class Test {
         // else {
         //   Fmt.pl("magenta", scriptObj.name)
         // }
-        // println Color.blue + "TEST: " + Color.magenta + test.desc + Color.off
-        // println Color.blue + "SCRIPT: " + Color.magenta + scriptObj.name + Color.off
+        // println Fmt.blue + "TEST: " + Fmt.magenta + test.desc + Fmt.off
+        // println Fmt.blue + "SCRIPT: " + Fmt.magenta + scriptObj.name + Fmt.off
       }
 
       String script = scriptObj.script.text
       // remove ExecutionUtil import
       .replaceFirst(/import com\.boomi\.execution\.ExecutionUtil;?/, "")
 
-      if (k == test.scripts.size() - 1) {
+      if (k == this.scripts.size() - 1) {
         script = script
           .replaceFirst(/(.*dataContext.storeStream.*)/,
             "\$1; dataContext.evalAssertions(i, ExecutionUtil); ")
       }
 
-      if (opts.printMode == "testResultsOnly" || !out.disjoint(["nothing", "no println"])) {
+      if (GlobalOptions.mode == "testResultsOnly" || !out.disjoint(["nothing", "no println"])) {
         script = script
         .replaceAll("println", "// println")
       }
 
-      // opts.printMode = "testResultsOnly"
-      if (opts.printMode != "testResultsOnly") {
+      // GlobalOptions.mode = "testResultsOnly"
+      if (GlobalOptions.mode != "testResultsOnly") {
         // Document Number
         if (out.disjoint(["nothing", "no guides"])) {
           script = script
           .replaceFirst(/(.*dataContext.getDataCount\(\).*)/,
-          "\$1; if (dataContext.getDataCount() > 1) println \"${Color.blue}DOCUMENT\" + i.toString() + \": ${Color.magenta}\" + dataContext.getDesc(i) + \"${Color.off}\"")
+          "\$1; if (dataContext.getDataCount() > 1) println \"${Fmt.blue}DOCUMENT\" + i.toString() + \": ${Fmt.magenta}\" + dataContext.getDesc(i) + \"${Fmt.off}\"")
         }
 
         // if (!out.disjoint(["all", "props", "p", "dpp", "DPP", "dpps", "DPPs"])) {
@@ -119,19 +120,18 @@ class Test {
       }
 
       try {
-        Eval.xyz(
-          dataContext, ExecutionUtil, Fmt, "def dataContext = x; ExecutionUtil = y; Fmt = z;"
-          + script
+        Eval.xy(
+          this.dataContext, ExecutionUtil, "def dataContext = x; ExecutionUtil = y; " + script
         )
       } catch(Exception e) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         org.codehaus.groovy.runtime.StackTraceUtils.sanitize(e).printStackTrace(pw)
 
-        this.test.hasFailedExec = true
-        this.test.execError = [
+        this.hasFailedExec = true
+        this.execError = [
           script: scriptObj.name,
-          docIndex: dataContext.dcIndex,
+          docIndex: this.dataContext.dcIndex,
           docName: dataContext.dataContextArr[dataContext.dcIndex].desc,
           error: sw.toString()
         ]
@@ -139,7 +139,7 @@ class Test {
         // def padChar = "| "
         // println padChar + sw.toString().replaceAll(/\n/, "\n$padChar ").replaceAll(/\n.*?\(Unknown Source\)\n/, "\n").replaceFirst(/\$padChar\s*$/,"")
 
-        if (opts.printMode != "testResultsOnly") {
+        if (GlobalOptions.mode != "testResultsOnly") {
           println sw.toString()
           System.exit(1)
         }
@@ -148,38 +148,15 @@ class Test {
         break
       }
 
-      // if (opts.printMode != "testResultsOnly" && outg.disjoint(["nothing"])) {
+      // if (GlobalOptions.mode != "testResultsOnly" && outg.disjoint(["nothing"])) {
       //   println ""
       // }
 
     }
-    // printResult()
-    // if (opts.printMode != "testResultsOnly" && outg.disjoint(["nothing"])) {
-    //   println ""
-    // }
 
-    return this.test
-    dataContext.close()
+    testFailed = true in this.dataContext.hasFailedAssertions || this.hasFailedExec ? true : false
+
+    // this.dataContext.close()
 
   }
-
-  private void printResult() {
-    println ""
-    Fmt.p("blue", "Test: ")
-    Fmt.p("magenta", this.test.desc)
-    println ""
-    println this.test.execError
-    // this.test.scripts.each { script ->
-    //   println script.name
-    //   println script.error
-    //   println this.test.docFailed
-    //
-    // }
-    println this.test.dataContext.dataContextArr.collect{ it.subMap(["desc", "assertions"])}
-    println ""
-    println "------------------"
-
-  }
-
-
 }
