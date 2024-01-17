@@ -4,25 +4,41 @@ import groovy.json.JsonOutput;
 class BoomiGroovy {
   static void main(String[] args) throws Exception {
 
-    def cli = new CliBuilder(usage: 'BoomiGroovy [-h] -t file -s script [-d document]')
+    def cli = new CliBuilder(usage: 'BoomiGroovy [-h] -t file')
 
     cli.with {
-      h  longOpt: 'help', 'Show usage'
-      t  longOpt: 'testfile', args: 1, argName: 'testFile', 'test file'
       m  longOpt: 'mode', args: 1, argName: 'mode', 'Mode'
-      i  longOpt: 'init', args: 1, argName: 'init', 'Init'
-      xa longOpt: 'suppress-all-output', type: boolean, 'Suppress all output'
-      xd longOpt: 'suppress-data-output', type: boolean, 'Suppresses output of data'
-      xp longOpt: 'suppress-props-output', type: boolean, 'Suppresses output of props'
+
+      // test mode
+      h  longOpt: 'help', 'Show usage'
       w  longOpt: 'working-dir', args: 1, argName: 'dir', 'Present Working Directory'
+      t  longOpt: 'test-suite-file', args: 1, argName: 'test-suite-file', 'Test Suite File'
+
+      // Run mode
+      h  longOpt: 'help', 'Show usage'
+      w  longOpt: 'working-dir', args: 1, argName: 'dir', 'Present Working Directory'
+      t  longOpt: 'test-suite-file', args: 1, argName: 'test-suite-file', 'Test Suite File'
+      s  longOpt: 'script', args: 1, argName: 'script', 'If not using a testsuite file: Script Filename'
+      d  longOpt: 'document', args: 1, argName: 'document', 'If not using a testsuite file: Document Filename'
+      p  longOpt: 'properties', args: 1, argName: 'properties', 'If not using a testsuite file: Properties Filename'
+      xd longOpt: 'suppress-data-output', type: boolean, 'Suppress data output (can also be done inside OPTIONS in a testsuite file)'
+      xp longOpt: 'suppress-props-output', type: boolean, 'Suppresses props output (can also be done inside OPTIONS in a testsuite file)'
+
+      // init mode
+      h  longOpt: 'help', 'Show usage'
+      w  longOpt: 'working-dir', args: 1, argName: 'dir', 'Present Working Directory'
+      s  longOpt: 'script', args: 1, argName: 'script-name', 'Name of new script'
+      l  longOpt: 'lang', args: 1, argName: 'lang', 'Language of input: xml, json, ff(default)'
     }
 
     def options = cli.parse(args)
 
-    if (options.h || !options.t || !options) {
+    if (options.h || !options) {
       cli.usage()
       return
     }
+    println "options.t: " + options.t
+    println "options.arguments(): " + options.arguments()
 
     // TODO: maybe - don't println inline. Capture println statements
     // TODO: change datafile, propsfile to just data: file, props: file
@@ -34,40 +50,52 @@ class BoomiGroovy {
     // TODO: DONE discover and run all testsuites recursively
     // TODO: dataContext.writeFile - remove html boilerplate (should be in source output)
     // TODO: make sure print works even if StoreStream is commented
+    // NOTE: catch exception when @file isn't found and provide friendly message
 
     // --- start v2 --- //
 
-    if (options.i) {
-      println "HELLO"
-      def initFile = options.i
-      Init.createFiles(options.w, initFile.replaceAll(" ", "_"))
-      System.exit(0)
-    }
+    // if (options.i) {
+    //   println "HELLO"
+    //   def initFile = options.i
+    //   Init.createFiles(options.w, initFile.replaceAll(" ", "_"))
+    //   System.exit(0)
+    // }
+
+    // def workingDir = options.w ?: System.getProperty("user.dir")
+    // def testSuiteFileName = options.t
+    // def mode = options.m
 
     LinkedHashMap OPTS = [
       workingDir: options.w ?: System.getProperty("user.dir"),
       testSuiteFileName: options.t,
-      printMode: options.m
+      mode: options.m == "test" ? "testResultsOnly" : options.m
     ]
 
     TestSuiteRunner testSuiteRunner = new TestSuiteRunner(OPTS)
 
-    testSuiteRunner.discoverAndRunTestSuites()
-    // if (OPTS.testSuiteFileName) {
-    //   testSuiteRunner.runTestSuite()
-    // } else {
-    //   testSuiteRunner.discoverAndRunTestSuites()
-    // }
+    // testSuiteRunner.discoverAndRunTestSuites()
+
+    if (OPTS.testSuiteFileName) {
+      println "test or run mode; has file"
+      // testSuiteRunner.runTestSuite()
+    } else if (OPTS.mode == "testResultsOnly") {
+      println "test mode; no file"
+      // testSuiteRunner.discoverAndRunTestSuites()
+    } else {
+      println "run mode; no file"
+      cli.usage()
+    }
+
 
     // testSuiteRunner.printResultsTemp()
 
-    // if (mode == "testResultsOnly") {
+    // if (OPTS.mode == "testResultsOnly") {
     //   testSuiteRunner.printResults()
     // }
 
     // --- end v2 --- //
 
-    // // --- start v1 --- //
+    // --- start v1 --- //
 
     // String workingDir = options.w ?: System.getProperty("user.dir")
     // ArrayList testFiles = [options.t ? options.t : null]
@@ -82,38 +110,9 @@ class BoomiGroovy {
     //   executionManager.printResults()
     // }
 
-    // // --- end v1 --- //
+    // --- end v1 --- //
 
   }
 
-  static String pprettyJson(def thing) {
-    return JsonOutput.prettyPrint(JsonOutput.toJson(thing))
-  }
-}
-
-class Fmt {
-  static String json(def thing) {
-    return groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(thing))
-  }
-  static void pl(def color, def str) {
-    println Color[color] + str + Color.off
-  }
-  static void p(def color, def str) {
-    print Color[color] + str + Color.off
-  }
-}
-
-class Color {
-  static String red = "${(char)27}[31m"
-  static String green = "${(char)27}[32m"
-  static String yellow = "${(char)27}[33m"
-  static String blue = "${(char)27}[34m"
-  static String magenta = "${(char)27}[35m"
-  static String cyan = "${(char)27}[36m"
-  static String grey = "${(char)27}[90m"
-  static String white = "${(char)27}[97m"
-  static String redReverse = "${(char)27}[31;7m"
-  static String greenReverse = "${(char)27}[32;7m"
-  static String off = "${(char)27}[39;49;27m"
 }
 
