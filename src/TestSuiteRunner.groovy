@@ -10,10 +10,7 @@ class TestSuiteRunner {
   }
 
   public void runTestSuite(String testSuiteFileName) {
-    TestSuite ts = new TestSuite(testSuiteFileName)
-    ts.run()
-    ts.printResult()
-    resultsTestSuites << ts
+    resultsTestSuites << new TestSuite(testSuiteFileName).run()
   }
 
   public void printResults() {
