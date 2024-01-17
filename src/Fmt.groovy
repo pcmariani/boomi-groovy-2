@@ -9,18 +9,30 @@ class Fmt {
   static String l5 = "            "
   static String l6 = "              "
 
+  static String red =           "${(char)27}[31m"
+  static String green =         "${(char)27}[32m"
+  static String yellow =        "${(char)27}[33m"
+  static String blue =          "${(char)27}[34m"
+  static String magenta =       "${(char)27}[35m"
+  static String cyan =          "${(char)27}[36m"
+  static String grey =          "${(char)27}[90m"
+  static String white =         "${(char)27}[97m"
+  static String redReverse =    "${(char)27}[31;7m"
+  static String greenReverse =  "${(char)27}[32;7m"
+  static String off =           "${(char)27}[39;49;27m"
+
   static colors = [
-    red:          "${(char)27}[31m",
-    green:        "${(char)27}[32m",
-    yellow:       "${(char)27}[33m",
-    blue:         "${(char)27}[34m",
-    magenta:      "${(char)27}[35m",
-    cyan:         "${(char)27}[36m",
-    grey:         "${(char)27}[90m",
-    white:        "${(char)27}[97m",
-    redReverse:   "${(char)27}[31;7m",
-    greenReverse: "${(char)27}[32;7m",
-    off:          "${(char)27}[39;49;27m"
+    red:          red,
+    green:        green,
+    yellow:       yellow,
+    blue:         blue,
+    magenta:      magenta,
+    cyan:         cyan,
+    grey:         grey,
+    white:        white,
+    redReverse:   redReverse,
+    greenReverse: greenReverse,
+    off:          off
   ]
 
   static void pl(def color, def str) {

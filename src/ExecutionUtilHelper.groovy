@@ -13,7 +13,7 @@ class ExecutionUtilHelper {
 
     static void printDynamicProcessProperties() {
         dynamicProcessProperties.each { k,v ->
-            println Color.cyan + k.replaceFirst("document.dynamic.userdefined.","") + Color.blue + ": " + Color.off + v
+            println Fmt.cyan + k.replaceFirst("document.dynamic.userdefined.","") + Fmt.blue + ": " + Fmt.off + v
         }
         println ""
     }

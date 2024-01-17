@@ -110,7 +110,7 @@ class DataContext2 {
     dataContextArr[index].assertions.each{ 
       if (it.error) {
         println ""
-        println Color.red + it.error + Color.off
+        println Fmt.red + it.error + Fmt.off
       }
     }
   }
@@ -127,14 +127,14 @@ class DataContext2 {
 
   void printData(int index) {
     def is = this.dataContextArr[index]?.is
-    // println Color.yellow + is?.text + Color.off
+    // println Fmt.yellow + is?.text + Fmt.off
     println is?.text
     is.reset()
   }
 
   void printProperties(int index) {
     this.dataContextArr[index]?.props.each { k,v ->
-      println Color.green + k.replaceFirst("document.dynamic.userdefined.","") + Color.blue + ": " + Color.off + v
+      println Fmt.green + k.replaceFirst("document.dynamic.userdefined.","") + Fmt.blue + ": " + Fmt.off + v
     }
     println ""
   }
