@@ -1,6 +1,6 @@
 OPTIONS:
-  # - no data
-  # - no props
+  - no data
+  - no props
   # - no assertions
   # - no results
   # - no println
@@ -72,15 +72,12 @@ GLOBALS:
 #         p1: ppp1
 #         p2: ppp2
 #       assert: 1 + 1 = 2
-# # -----------n-------------------
-
-# test4: ba3
 # # ------------------------------
 
 test5:
   testfilesDir: /
   # files: bbb
-  datafile: tests/ba3.dat
+  data: file tests/ba3.dat
   propsfile: tests/ba3.properties
   assert:
     # - 1 + 1 == 9
