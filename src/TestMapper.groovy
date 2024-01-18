@@ -1,4 +1,4 @@
-class TestSuiteFileMapper {
+class TestMapper {
 
   LinkedHashMap GLOBALS
   def testRaw
@@ -9,7 +9,7 @@ class TestSuiteFileMapper {
   DataContext2 dataContext
   String testfilesDir
 
-  TestSuiteFileMapper(GLOBALS, testRaw, index) {
+  TestMapper(GLOBALS, testRaw, index) {
     this.GLOBALS = GLOBALS
     this.testRaw = testRaw
     this.index = index
@@ -86,6 +86,10 @@ class TestSuiteFileMapper {
   }
 
 
+  private String getFilenameFromValue(value) {
+      return value.replaceFirst(/\s*@?file\s*\(?'?(.*?)'?\)?$/, "\$1")
+  }
+
 
   private def getExecutionScripts(tfd, scriptfiles) {
     def scriptsArr = []
@@ -117,7 +121,11 @@ class TestSuiteFileMapper {
 
 
   private InputStream getDocumentContents( String data, String datafile) {
-    if (datafile) {
+    if (data =~ /^\s*file/) {
+      def filename = getFilenameFromValue(data)
+      return new FileInputStream("${GlobalOptions.workingDir}/$filename")
+    }
+    else if (datafile) {
       return new FileInputStream("${GlobalOptions.workingDir}/$datafile")
     } else if (data) {
       return new ByteArrayInputStream(data.getBytes("UTF-8"))
@@ -132,6 +140,12 @@ class TestSuiteFileMapper {
     Properties properties = new Properties()
 
     // if (type == "DPP") println "DPP: " + globalPropsStr
+
+    // if (data =~ /^\s*file/) {
+    //   def filename = getFilenameFromValue(data)
+    //   return new FileInputStream("${GlobalOptions.workingDir}/$filename")
+    // }
+    //
 
     if (propsfile) {
       BufferedReader reader = new BufferedReader(new FileReader("${GlobalOptions.workingDir}/$propsfile"));
@@ -174,7 +188,8 @@ class TestSuiteFileMapper {
       String propsSubDir = propsfile ? propsfile.replaceFirst(/(.*)[\/\\].*/, "\$1") : ""
       properties.each { k,v ->
         if (v =~/@file/) {
-          String filename = v.replaceFirst(/\s*@file\s*\(?'?(.*?)'?\)?$/, "\$1")
+          // String filename = v.replaceFirst(/\s*@file\s*\(?'?(.*?)'?\)?$/, "\$1")
+          String filename = getFilenameFromValue(v)
           properties.setProperty(k, new FileReader("${GlobalOptions.workingDir}/$propsSubDir/$filename").text)
         }
       }
