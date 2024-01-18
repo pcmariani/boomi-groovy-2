@@ -51,6 +51,7 @@ class BoomiGroovy {
     // TODO: dataContext.writeFile - remove html boilerplate (should be in source output)
     // TODO: make sure print works even if StoreStream is commented
     // NOTE: catch exception when @file isn't found and provide friendly message
+    // TODO: props in testSuiteFile override props in props file
 
     // --- start v2 --- //
 

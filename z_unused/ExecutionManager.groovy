@@ -11,7 +11,7 @@ class ExecutionManager {
     this.workingDir = workingDir
   }
 
-  public void runTestSuite(String printMode, String testFile) {
+  public void runTestSuite(String mode, String testFile) {
 
     LinkedHashMap testSuite = [suiteName:testFile, suiteFailed: false]
 
@@ -21,12 +21,12 @@ class ExecutionManager {
     // println GLOBALS
     testSuite.globals = GLOBALS
 
-    OPTIONS.printMode = printMode
+    OPTIONS.mode = mode
     OPTIONS.workingDir = workingDir
 
     ArrayList tests = []
 
-    if (OPTIONS.printMode != "testResultsOnly" && OPTIONS.userOpts?.disjoint(["nothing", "no guides"])) {
+    if (OPTIONS.mode != "testResultsOnly" && OPTIONS.userOpts?.disjoint(["nothing", "no guides"])) {
       println ""
     }
     testsFileRoot.eachWithIndex { testYaml, index ->
@@ -40,7 +40,7 @@ class ExecutionManager {
         testSuite.suiteFailed = true
       }
     }
-    if (OPTIONS.printMode != "testResultsOnly" && OPTIONS.userOpts?.disjoint(["nothing", "no guides"])) {
+    if (OPTIONS.mode != "testResultsOnly" && OPTIONS.userOpts?.disjoint(["nothing", "no guides"])) {
       println ""
     }
     testSuite.tests = tests
