@@ -29,7 +29,7 @@ class TestSuite {
     this.tests = []
     testSuiteFileRaw.eachWithIndex { testRaw, index ->
 
-      TestSuiteFileMapper mappedTest = new TestSuiteFileMapper(GLOBALS, testRaw, index)
+      TestMapper mappedTest = new TestMapper(GLOBALS, testRaw, index)
       mappedTest.transformTestYaml()
 
       this.tests << new Test(
