@@ -46,12 +46,12 @@ class Test {
       // println out
 
       if (GlobalOptions.mode != "testResultsOnly") {
-        if (out.disjoint(["nothing", "no guides"])) {
+        if (out.disjoint(["no guides"])) {
           println ""
         }
-        if (out.disjoint(["nothing", "no guides"])) {
+        if (out.disjoint(["no guides"])) {
           Fmt.p("magenta", scriptObj.name)
-          Fmt.pl("grey", " - " + test.desc)
+          Fmt.pl("grey", " - " + this.desc)
         } 
         // else {
         //   Fmt.pl("magenta", scriptObj.name)
@@ -70,7 +70,7 @@ class Test {
             "\$1; dataContext.evalAssertions(i, ExecutionUtil); ")
       }
 
-      if (GlobalOptions.mode == "testResultsOnly" || !out.disjoint(["nothing", "no println"])) {
+      if (GlobalOptions.mode == "testResultsOnly" || !out.disjoint(["no println"])) {
         script = script
         .replaceAll("println", "// println")
       }
@@ -78,35 +78,35 @@ class Test {
       // GlobalOptions.mode = "testResultsOnly"
       if (GlobalOptions.mode != "testResultsOnly") {
         // Document Number
-        if (out.disjoint(["nothing", "no guides"])) {
+        if (out.disjoint(["no guides"])) {
           script = script
           .replaceFirst(/(.*dataContext.getDataCount\(\).*)/,
           "\$1; if (dataContext.getDataCount() > 1) println \"${Fmt.blue}DOCUMENT\" + i.toString() + \": ${Fmt.magenta}\" + dataContext.getDesc(i) + \"${Fmt.off}\"")
         }
 
         // if (!out.disjoint(["all", "props", "p", "dpp", "DPP", "dpps", "DPPs"])) {
-        if (out.disjoint(["nothing", "no results", "no props"])) {
+        if (out.disjoint(["no results", "no props"])) {
           script = script
           .replaceFirst(/(.*dataContext.storeStream.*)/,
           "\$1; ExecutionUtil.printDynamicProcessProperties(); ")
         }
 
         // if (!out.disjoint(["all", "props", "p", "ddp", "ddps"])) {
-        if (out.disjoint(["nothing", "no results", "no props"])) {
+        if (out.disjoint(["no results", "no props"])) {
           script = script
           .replaceFirst(/(.*dataContext.storeStream.*)/,
           "\$1; dataContext.printProperties(i); ")
         }
 
         // if (!out.disjoint(["all", "data", "d", "is"])) {
-        if (out.disjoint(["nothing", "no results", "no data"])) {
+        if (out.disjoint(["no results", "no data"])) {
           script = script
           .replaceFirst(/(.*dataContext.storeStream.*)/,
           "\$1; dataContext.printData(i); ")
         }
 
         // if (!out.disjoint(["all", "assert", "assertions", "a"])) {
-        if (out.disjoint(["nothing", "no results", "no assertions"])) {
+        if (out.disjoint(["no results", "no assertions"])) {
           script = script
           .replaceFirst(/(.*dataContext.storeStream.*)/,
           "\$1; dataContext.printAssertions(i); ")
@@ -148,7 +148,7 @@ class Test {
         break
       }
 
-      // if (GlobalOptions.mode != "testResultsOnly" && outg.disjoint(["nothing"])) {
+      // if (GlobalOptions.mode != "testResultsOnly") {
       //   println ""
       // }
 
