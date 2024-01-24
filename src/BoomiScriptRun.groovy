@@ -1,4 +1,4 @@
-class boomiScriptRun {
+class BoomiScriptRun {
   static void main(String[] args) throws Exception {
 
     def cli = new CliBuilder(usage: 'boomiScriptRun [-h] [testSuiteFileName]'
