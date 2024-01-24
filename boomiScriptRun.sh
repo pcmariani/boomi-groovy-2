@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-scriptName="boomiScriptRun.groovy"
+scriptName="BoomiScriptRun.groovy"
 workingDir="$(pwd)"
 
 pushd "$BOOMI_GROOVY_HOME/src" >/dev/null
