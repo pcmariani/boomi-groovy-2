@@ -19,9 +19,8 @@ class Test {
 
   def run() {
     def outg = GlobalOptions.suiteOpts ?: []
-    // println outg
-
-    if (GlobalOptions.mode != "testResultsOnly" && outg.disjoint(["no guides"])) {
+    // println out
+    if (outg.disjoint(["no guides"])) {
       if (this.index > 0) {
         println ""
         println Fmt.green + "-------------------------------------------------------------------------" + Fmt.off
@@ -45,24 +44,15 @@ class Test {
       ArrayList out = scriptObj.output + outg
       // println out
 
-      if (GlobalOptions.mode != "testResultsOnly") {
-        if (out.disjoint(["no guides"])) {
-          println ""
-        }
-        if (out.disjoint(["no guides"])) {
-          Fmt.p("magenta", scriptObj.name)
-          Fmt.pl("grey", " - " + this.desc)
-        } 
-        // else {
-        //   Fmt.pl("magenta", scriptObj.name)
-        // }
-        // println Fmt.blue + "TEST: " + Fmt.magenta + test.desc + Fmt.off
-        // println Fmt.blue + "SCRIPT: " + Fmt.magenta + scriptObj.name + Fmt.off
-      }
+      if (this.scripts.size() > 1 && out.disjoint(["no guides"])) {
+        println ""
+        Fmt.p("magenta", scriptObj.name)
+        Fmt.pl("grey", " - " + this.desc)
+      } 
 
       String script = scriptObj.script.text
-      // remove ExecutionUtil import
-      .replaceFirst(/import com\.boomi\.execution\.ExecutionUtil;?/, "")
+        // remove ExecutionUtil import
+        .replaceFirst(/import com\.boomi\.execution\.ExecutionUtil;?/, "")
 
       if (k == this.scripts.size() - 1) {
         script = script
@@ -70,53 +60,45 @@ class Test {
             "\$1; dataContext.evalAssertions(i, ExecutionUtil); ")
       }
 
-      if (GlobalOptions.mode == "testResultsOnly" || !out.disjoint(["no println"])) {
+      if (!out.disjoint(["no println"])) {
         script = script
         .replaceAll("println", "// println")
       }
 
-      // GlobalOptions.mode = "testResultsOnly"
-      if (GlobalOptions.mode != "testResultsOnly") {
-        // Document Number
-        if (out.disjoint(["no guides"])) {
-          script = script
-          .replaceFirst(/(.*dataContext.getDataCount\(\).*)/,
-          "\$1; if (dataContext.getDataCount() > 1) println \"${Fmt.blue}DOCUMENT\" + i.toString() + \": ${Fmt.magenta}\" + dataContext.getDesc(i) + \"${Fmt.off}\"")
-        }
+      if (out.disjoint(["no guides"])) {
+        script = script
+        .replaceFirst(/(.*dataContext.getDataCount\(\).*)/,
+        "\$1; if (dataContext.getDataCount() > 1) println \"${Fmt.blue}DOCUMENT\" + i.toString() + \": ${Fmt.magenta}\" + dataContext.getDesc(i) + \"${Fmt.off}\"")
+      }
 
-        // if (!out.disjoint(["all", "props", "p", "dpp", "DPP", "dpps", "DPPs"])) {
-        if (out.disjoint(["no results", "no props"])) {
-          script = script
-          .replaceFirst(/(.*dataContext.storeStream.*)/,
-          "\$1; ExecutionUtil.printDynamicProcessProperties(); ")
-        }
+      if (out.disjoint(["no results", "no props"])) {
+        script = script
+        .replaceFirst(/(.*dataContext.storeStream.*)/,
+        "\$1; ExecutionUtil.printDynamicProcessProperties(); ")
+      }
 
-        // if (!out.disjoint(["all", "props", "p", "ddp", "ddps"])) {
-        if (out.disjoint(["no results", "no props"])) {
-          script = script
-          .replaceFirst(/(.*dataContext.storeStream.*)/,
-          "\$1; dataContext.printProperties(i); ")
-        }
+      if (out.disjoint(["no results", "no props"])) {
+        script = script
+        .replaceFirst(/(.*dataContext.storeStream.*)/,
+        "\$1; dataContext.printProperties(i); ")
+      }
 
-        // if (!out.disjoint(["all", "data", "d", "is"])) {
-        if (out.disjoint(["no results", "no data"])) {
-          script = script
-          .replaceFirst(/(.*dataContext.storeStream.*)/,
-          "\$1; dataContext.printData(i); ")
-        }
+      if (out.disjoint(["no results", "no data"])) {
+        script = script
+        .replaceFirst(/(.*dataContext.storeStream.*)/,
+        "\$1; dataContext.printData(i); ")
+      }
 
-        // if (!out.disjoint(["all", "assert", "assertions", "a"])) {
-        if (out.disjoint(["no results", "no assertions"])) {
-          script = script
-          .replaceFirst(/(.*dataContext.storeStream.*)/,
-          "\$1; dataContext.printAssertions(i); ")
-        }
+      if (out.disjoint(["no results", "no assertions"])) {
+        script = script
+        .replaceFirst(/(.*dataContext.storeStream.*)/,
+        "\$1; dataContext.printAssertions(i); ")
+      }
 
-        if (k == this.scripts.size() - 1) {
-          script = script
-          .replaceFirst(/(.*dataContext.storeStream.*)/,
-          "\$1; if (dataContext.getExtension(i)) dataContext.writeFile(i, \"${GlobalOptions.workingDir}\", \"$test.desc\", \"$scriptObj.name\"); ")
-        }
+      if (out.disjoint(["no files"]) && k == this.scripts.size() - 1) {
+        script = script
+        .replaceFirst(/(.*dataContext.storeStream.*)/,
+        "\$1; if (dataContext.getExtension(i)) dataContext.writeFile(i, \"${GlobalOptions.workingDir}\", \"$test.desc\", \"$scriptObj.name\"); ")
       }
 
       try {
@@ -139,18 +121,15 @@ class Test {
         // def padChar = "| "
         // println padChar + sw.toString().replaceAll(/\n/, "\n$padChar ").replaceAll(/\n.*?\(Unknown Source\)\n/, "\n").replaceFirst(/\$padChar\s*$/,"")
 
-        if (GlobalOptions.mode != "testResultsOnly") {
-          println sw.toString()
+        if (out.disjoint(["no errors"])) {
+          // println sw.toString()
+          Fmt.pl("red", sw.toString())
           System.exit(1)
         }
 
         // dataContext.close()
         break
       }
-
-      // if (GlobalOptions.mode != "testResultsOnly") {
-      //   println ""
-      // }
 
     }
 

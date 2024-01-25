@@ -18,6 +18,10 @@ class BoomiScriptTest {
     String testSuiteFileName = options.arguments()[0]
     GlobalOptions.workingDir = options.workingDir ?: System.getProperty("user.dir")
     GlobalOptions.mode = "testResultsOnly"
+    GlobalOptions.setSuiteOptsFromMode("testResultsOnly")
+
+    // println GlobalOptions.suiteOpts
+    // GlobalOptions.class.getDeclaredFields().each {println it.getName() + " " + GlobalOptions."${it.getName()}"}
 
     TestSuiteRunner testSuiteRunner = new TestSuiteRunner()
 
@@ -28,7 +32,8 @@ class BoomiScriptTest {
       testSuiteRunner.discoverAndRunTestSuites()
     }
 
-    testSuiteRunner.printResults()
+    // testSuiteRunner.printResults()
+    // println GlobalOptions.suiteOpts
 
   }
 }

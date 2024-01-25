@@ -18,13 +18,23 @@ class TestSuite {
     def testSuiteFilePath = "${GlobalOptions.workingDir}/${testSuiteFileName}"
 
     // if (GlobalOptions.testSuiteFileExt == "yaml") {
-      this.testSuiteFileRaw = new Yaml().load((testSuiteFilePath as File).text)
+    this.testSuiteFileRaw = new Yaml().load((testSuiteFilePath as File).text)
     // } else if (GlobalOptions.testSuiteFileExt == "json") {
     //   this.testSuiteFileRaw = new JsonSlurper.parseText((testSuiteFilePath as File).text)
     // }
 
-    GlobalOptions.suiteOpts = testSuiteFileRaw.remove('OPTIONS') ?: [:]
+    GlobalOptions.suiteOpts.addAll(testSuiteFileRaw.remove('OPTIONS') ?: [])
+
+    // GlobalOptions.suiteOpts << testSuiteFileRaw.remove('OPTIONS') ?: [:]
     this.GLOBALS = parseGlobals(testSuiteFileRaw.remove('GLOBALS')) ?: [:]
+    LinkedHashMap g = this.GLOBALS
+
+    def scripts = g.scripts ?: g.script
+    GlobalOptions.scripts = scripts instanceof String ? [scripts] : scripts
+    GlobalOptions.processProps = g.DPPS ?: g.dpps
+    GlobalOptions.testFilesDir = g.testFilesDir ?: "."
+
+    // GlobalOptions.class.getDeclaredFields().each {println it.getName() + " " + GlobalOptions."${it.getName()}"}
 
     this.tests = []
     testSuiteFileRaw.eachWithIndex { testRaw, index ->
@@ -66,7 +76,7 @@ class TestSuite {
     this.suiteFailed = numFailedTests > 0 ? true : false
 
     if (GlobalOptions.mode == "testResultsOnly") {
-      this.printResult()
+      // this.printResult()
     }
 
     return this
