@@ -1,6 +1,5 @@
 class TestMapper {
 
-  LinkedHashMap GLOBALS
   def testRaw
   int index
   String desc
@@ -9,8 +8,7 @@ class TestMapper {
   DataContext2 dataContext
   String testfilesDir
 
-  TestMapper(GLOBALS, testRaw, index) {
-    this.GLOBALS = GLOBALS
+  TestMapper(testRaw, index) {
     this.testRaw = testRaw
     this.index = index
   }
@@ -21,38 +19,26 @@ class TestMapper {
 
     def dataContext = new DataContext2()
 
-    if (!test.docs) {
+    if (!test.docs && !test.documents) {
       test.docs = [test.clone()]
       test.remove("assertions")
       test.remove("assert")
-      test.remove("a")
     }
 
     test.docs.eachWithIndex { doc, m ->
 
-      def tfd = doc.testfilesDir ?: doc.tfDir ?: GLOBALS.testfilesDir
+      def tfd = doc.testfilesDir ?: GlobalOptions.testFilesDir
 
       dataContext.storeStream(
         doc.desc ?: doc.files ?: doc.f ?: doc.datafile ?: doc.df ?: "Document " + m,
         getDocumentContents(doc.data ?: doc.datafile),
-
-        // getDocumentContents(
-        //   doc.data ?: doc.d ?: null,
-        //   doc.files ? "$tfd/${doc.files}.dat"
-        //   : doc.f ? "$tfd/${doc.f}.dat"
-        //   : doc.datafile ? "$tfd/$doc.datafile"
-        //   : doc.df ? "$tfd/$doc.df"
-        //   : null
-        // ),
-        loadProperties("ddp", [doc.props, doc.propsfile]),
-        // loadProps(
-        //   "ddp",
-        //   null,
-        //   doc.props ?: null,
-        //   : doc.propsfile ? "$tfd/$doc.propsfile"
-        //   : doc.pf ? "$tfd/$doc.pf"
-        //   : null
-        // ),
+        loadProperties(
+          "ddp",
+          [
+            doc.ddps ?: doc.props ?: doc.docProps ?: doc.propsfile,
+            doc.ddpOverrides
+          ]
+        ),
         getAssertions(
           doc.assert ?: doc.a ?: null,
           test.assert ?: test.a ?: null
@@ -61,35 +47,26 @@ class TestMapper {
       )
     }
 
-    def tfd = test.testfilesDir ?: test.tfDir ?: GLOBALS.testfilesDir
+    def tfd = test.testfilesDir ?: GlobalOptions.testFilesDir
 
     this.index = index
     this.desc = desc
     this.scripts = getExecutionScripts(
-      tfd, test.scripts ?: test.s ?: GLOBALS.scriptfiles
+      tfd, test.scripts ?: test.s ?: GlobalOptions.scripts
     )
     this.dpps = loadProperties(
-      "DPP", [GLOBALS.ProcessProps, test.DPPs, test.moreDPPs]
+      "DPP",
+      [
+        GlobalOptions.dynamicProcessPropsRaw,
+        test.DPPs,
+        GlobalOptions.dynamicProcessPropsOverridesRaw,
+        test.moreDPPs
+      ]
     )
-    // this.dpps = loadProps(
-    //   "DPP",
-    //   GLOBALS.ProcessProps,
-    //   test.'process-props' ?: test.dpps ?: null,
-    //   test.processPropsFile ? "$tfd/$test.processPropsFile"
-    //   : test.dppsFile ? "$tfd/$test.dppsFile"
-    //   : test.propsfile ? "$tfd/$test.propsfile"
-    //   : test.pf ? "$tfd/$test.pf"
-    //   : GLOBALS.DPPsFile ? "$GLOBALS.testfilesDir/$GLOBALS.DPPsFile"
-    //   : null
-    // )
     this.dataContext = dataContext
     this.testfilesDir = tfd
   }
 
-
-  private String getFilenameFromValue(value) {
-      return value.replaceFirst(/\s*@?file\s*\(?'?(.*?)'?\)?$/, "\$1")
-  }
 
 
   private def getExecutionScripts(tfd, scriptfiles) {
@@ -121,26 +98,7 @@ class TestMapper {
 
 
 
-  // private InputStream getDocumentContents( String data, String datafile) {
-  //   if (data =~ /^\s*file/) {
-  //     def filename = getFilenameFromValue(data)
-  //     return new FileInputStream("${GlobalOptions.workingDir}/$filename")
-  //   }
-  //   else if (datafile) {
-  //     return new FileInputStream("${GlobalOptions.workingDir}/$datafile")
-  //   } else if (data) {
-  //     return new ByteArrayInputStream(data.getBytes("UTF-8"))
-  //   } else {
-  //     return new ByteArrayInputStream("".getBytes("UTF-8"))
-  //   }
-  // }
-  //
-
-
-
-
-
-  private String getDataFilenameFromValue(value) {
+  private String getFilenameFromValue(value) {
     // println value
     def filename = (value =~ /(?s)^\s*(?:@?file)?\s*\(?'?([^@]+\.\w+)'?\)?\s*$/).findAll()*.last()[0]
     // println "---------- " + filename
@@ -149,15 +107,12 @@ class TestMapper {
 
 
   private InputStream getDocumentContents(String data) {
-    def fileName = getDataFilenameFromValue(data)
-    // println "FILENAME: " + fileName
+    def fileName = getFilenameFromValue(data)
     if (fileName) {
       File file = new File("${GlobalOptions.workingDir}/$fileName")
       if (file.exists()) {
-        // println file.text
         return new FileInputStream(file)
       } else {
-        // println data
         return new ByteArrayInputStream(data.getBytes("UTF-8"))
       }
     } else if (data) {
@@ -174,7 +129,7 @@ class TestMapper {
     propsSourcesArr.findAll{it != null}.each {
 
       Properties propertiesPerSource = new Properties()
-      String propertiesFilename = getDataFilenameFromValue(it)
+      String propertiesFilename = getFilenameFromValue(it)
 
       if (propertiesFilename) {
         BufferedReader reader = new BufferedReader(new FileReader("${GlobalOptions.workingDir}/$propertiesFilename"));
@@ -206,7 +161,7 @@ class TestMapper {
         String propsSubDir = propertiesFilename ? propertiesFilename.replaceFirst(/(.*)[\/\\].*/, "\$1") : ""
         propertiesPerSource.each { k, v ->
           // println k + "     " + v
-          def valueFilename = getDataFilenameFromValue(v)
+          def valueFilename = getFilenameFromValue(v)
           if (valueFilename) {
             propertiesPerSource.setProperty(k, new FileReader("${GlobalOptions.workingDir}/$propsSubDir/$valueFilename").text)
           }

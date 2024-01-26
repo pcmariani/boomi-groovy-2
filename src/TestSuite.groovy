@@ -25,13 +25,12 @@ class TestSuite {
 
     GlobalOptions.suiteOpts.addAll(testSuiteFileRaw.remove('OPTIONS') ?: [])
 
-    // GlobalOptions.suiteOpts << testSuiteFileRaw.remove('OPTIONS') ?: [:]
-    this.GLOBALS = parseGlobals(testSuiteFileRaw.remove('GLOBALS')) ?: [:]
-    LinkedHashMap g = this.GLOBALS
-
+    LinkedHashMap g = testSuiteFileRaw.remove('GLOBALS') ?: [:]
     def scripts = g.scripts ?: g.script
+
     GlobalOptions.scripts = scripts instanceof String ? [scripts] : scripts
-    GlobalOptions.processProps = g.DPPS ?: g.dpps
+    GlobalOptions.dynamicProcessPropsRaw = g.DPPs ?: g.dpps
+    GlobalOptions.dynamicProcessPropsOverridesRaw = g.DPPOverrides ?: g.dppOverrides
     GlobalOptions.testFilesDir = g.testFilesDir ?: "."
 
     // GlobalOptions.class.getDeclaredFields().each {println it.getName() + " " + GlobalOptions."${it.getName()}"}
@@ -39,7 +38,7 @@ class TestSuite {
     this.tests = []
     testSuiteFileRaw.eachWithIndex { testRaw, index ->
 
-      TestMapper mappedTest = new TestMapper(GLOBALS, testRaw, index)
+      TestMapper mappedTest = new TestMapper(testRaw, index)
       mappedTest.transformTestYaml()
 
       this.tests << new Test(
