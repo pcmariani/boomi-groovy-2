@@ -2,8 +2,8 @@ class TestSuiteRunner {
   ArrayList resultsTestSuites = []
 
   public void discoverAndRunTestSuites(String folder) {
-    new File(GlobalOptions.workingDir).traverse(type: groovy.io.FileType.FILES, nameFilter: ~/.*.yaml/) {
-      GlobalOptions.workingDir = it.getParent()
+    new File(OPTIONS.workingDir).traverse(type: groovy.io.FileType.FILES, nameFilter: ~/.*.yaml/) {
+      OPTIONS.workingDir = it.getParent()
       def testSuiteFileName = it.getName()
       runTestSuite(testSuiteFileName)
     }

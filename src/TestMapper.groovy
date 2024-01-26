@@ -27,7 +27,7 @@ class TestMapper {
 
     test.docs.eachWithIndex { doc, m ->
 
-      def tfd = doc.testfilesDir ?: GlobalOptions.testFilesDir
+      def tfd = doc.testfilesDir ?: Globals.testFilesDir
 
       dataContext.storeStream(
         doc.desc ?: doc.files ?: doc.f ?: doc.datafile ?: doc.df ?: "Document " + m,
@@ -47,20 +47,20 @@ class TestMapper {
       )
     }
 
-    def tfd = test.testfilesDir ?: GlobalOptions.testFilesDir
+    def tfd = test.testfilesDir ?: Globals.testFilesDir
 
     this.index = index
     this.desc = desc
     this.scripts = getExecutionScripts(
-      tfd, test.scripts ?: test.s ?: GlobalOptions.scripts
+      tfd, test.scripts ?: test.s ?: Globals.scripts
     )
     this.dpps = loadProperties(
       "DPP",
       [
-        GlobalOptions.dynamicProcessPropsRaw,
+        Globals.DPPs,
         test.DPPs,
-        GlobalOptions.dynamicProcessPropsOverridesRaw,
-        test.moreDPPs
+        Globals.DPPsOverride,
+        test.DPPsOverride
       ]
     )
     this.dataContext = dataContext
@@ -78,7 +78,7 @@ class TestMapper {
       if (scriptfile instanceof String) {
         scriptsArr << [
           name: scriptfile,
-          script: new FileInputStream("${GlobalOptions.workingDir}/$scriptfile"),
+          script: new FileInputStream("${Globals.workingDir}/$scriptfile"),
           output: m == scriptfiles.size() - 1 ? ["all"] : ["xx"],
         ]
       }
@@ -88,7 +88,7 @@ class TestMapper {
 
         scriptsArr << [
           name: scriptfileName,
-          script: new FileInputStream("${GlobalOptions.workingDir}/$scriptfileName"),
+          script: new FileInputStream("${Globals.workingDir}/$scriptfileName"),
           output: scriptArgs ?: []
         ]
       }
@@ -109,7 +109,7 @@ class TestMapper {
   private InputStream getDocumentContents(String data) {
     def fileName = getFilenameFromValue(data)
     if (fileName) {
-      File file = new File("${GlobalOptions.workingDir}/$fileName")
+      File file = new File("${Globals.workingDir}/$fileName")
       if (file.exists()) {
         return new FileInputStream(file)
       } else {
@@ -132,7 +132,7 @@ class TestMapper {
       String propertiesFilename = getFilenameFromValue(it)
 
       if (propertiesFilename) {
-        BufferedReader reader = new BufferedReader(new FileReader("${GlobalOptions.workingDir}/$propertiesFilename"));
+        BufferedReader reader = new BufferedReader(new FileReader("${Globals.workingDir}/$propertiesFilename"));
         String line
         while ((line = reader.readLine()) != null) {
           def propArr = line.split(/\s*=\s*/, 2)
@@ -163,7 +163,7 @@ class TestMapper {
           // println k + "     " + v
           def valueFilename = getFilenameFromValue(v)
           if (valueFilename) {
-            propertiesPerSource.setProperty(k, new FileReader("${GlobalOptions.workingDir}/$propsSubDir/$valueFilename").text)
+            propertiesPerSource.setProperty(k, new FileReader("${Globals.workingDir}/$propsSubDir/$valueFilename").text)
           }
         }
 

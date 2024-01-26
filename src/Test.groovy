@@ -18,7 +18,7 @@ class Test {
   }
 
   def run() {
-    def outg = GlobalOptions.suiteOpts ?: []
+    def outg = Globals.suiteOpts ?: []
     // println out
     if (outg.disjoint(["no guides"])) {
       if (this.index > 0) {
@@ -98,7 +98,7 @@ class Test {
       if (out.disjoint(["no files"]) && k == this.scripts.size() - 1) {
         script = script
         .replaceFirst(/(.*dataContext.storeStream.*)/,
-        "\$1; if (dataContext.getExtension(i)) dataContext.writeFile(i, \"${GlobalOptions.workingDir}\", \"$test.desc\", \"$scriptObj.name\"); ")
+        "\$1; if (dataContext.getExtension(i)) dataContext.writeFile(i, \"${Globals.workingDir}\", \"$test.desc\", \"$scriptObj.name\"); ")
       }
 
       try {

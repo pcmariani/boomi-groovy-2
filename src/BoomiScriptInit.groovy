@@ -94,8 +94,8 @@ class BoomiScriptRun {
 
 
     // String testSuiteFileName = options.arguments()[0]
-    // GlobalOptions.workingDir = options.workingDir ?: System.getProperty("user.dir")
-    // GlobalOptions.mode = "init"
+    // OPTIONS.workingDir = options.workingDir ?: System.getProperty("user.dir")
+    // OPTIONS.mode = "init"
     //
     // def initFile = options.i
     // Init.createFiles(options, initFile.replaceAll(" ", "_"))

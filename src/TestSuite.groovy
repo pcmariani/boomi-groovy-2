@@ -15,25 +15,25 @@ class TestSuite {
   TestSuite(String testSuiteFileName) {
     this.testSuiteFileName = testSuiteFileName
 
-    def testSuiteFilePath = "${GlobalOptions.workingDir}/${testSuiteFileName}"
+    def testSuiteFilePath = "${Globals.workingDir}/${testSuiteFileName}"
 
-    // if (GlobalOptions.testSuiteFileExt == "yaml") {
+    // if (Globals.testSuiteFileExt == "yaml") {
     this.testSuiteFileRaw = new Yaml().load((testSuiteFilePath as File).text)
-    // } else if (GlobalOptions.testSuiteFileExt == "json") {
+    // } else if (Globals.testSuiteFileExt == "json") {
     //   this.testSuiteFileRaw = new JsonSlurper.parseText((testSuiteFilePath as File).text)
     // }
 
-    GlobalOptions.suiteOpts.addAll(testSuiteFileRaw.remove('OPTIONS') ?: [])
+    Globals.suiteOpts.addAll(testSuiteFileRaw.remove('OPTIONS') ?: [])
 
     LinkedHashMap g = testSuiteFileRaw.remove('GLOBALS') ?: [:]
     def scripts = g.scripts ?: g.script
 
-    GlobalOptions.scripts = scripts instanceof String ? [scripts] : scripts
-    GlobalOptions.dynamicProcessPropsRaw = g.DPPs ?: g.dpps
-    GlobalOptions.dynamicProcessPropsOverridesRaw = g.DPPOverrides ?: g.dppOverrides
-    GlobalOptions.testFilesDir = g.testFilesDir ?: "."
+    Globals.scripts = scripts instanceof String ? [scripts] : scripts
+    Globals.DPPs = g.DPPs ?: g.dpps
+    Globals.DPPsOverride = g.DPPsOverride ?: g.dppsOverride
+    Globals.testFilesDir = g.testFilesDir ?: "."
 
-    // GlobalOptions.class.getDeclaredFields().each {println it.getName() + " " + GlobalOptions."${it.getName()}"}
+    // Globals.class.getDeclaredFields().each {println it.getName() + " " + Globals."${it.getName()}"}
 
     this.tests = []
     testSuiteFileRaw.eachWithIndex { testRaw, index ->
@@ -74,7 +74,7 @@ class TestSuite {
     this.numTests = tests.testFailed.size()
     this.suiteFailed = numFailedTests > 0 ? true : false
 
-    if (GlobalOptions.mode == "testResultsOnly") {
+    if (Globals.mode == "testResultsOnly") {
       // this.printResult()
     }
 
