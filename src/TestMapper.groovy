@@ -42,16 +42,15 @@ class TestMapper {
           : doc.df ? "$tfd/$doc.df"
           : null
         ),
-        loadProps(
-          "ddp",
-          null,
-          doc.props ?: doc.p ?: null,
-          doc.files ? "$tfd/${doc.files}.properties"
-          : doc.f ? "$tfd/${doc.f}.properties"
-          : doc.propsfile ? "$tfd/$doc.propsfile"
-          : doc.pf ? "$tfd/$doc.pf"
-          : null
-        ),
+        loadProperties("ddp", [doc.props, doc.propsfile]),
+        // loadProps(
+        //   "ddp",
+        //   null,
+        //   doc.props ?: null,
+        //   : doc.propsfile ? "$tfd/$doc.propsfile"
+        //   : doc.pf ? "$tfd/$doc.pf"
+        //   : null
+        // ),
         getAssertions(
           doc.assert ?: doc.a ?: null,
           test.assert ?: test.a ?: null
@@ -68,19 +67,20 @@ class TestMapper {
       tfd,
       test.scripts ?: test.s ?: GLOBALS.scriptfiles
     )
-    this.dpps = loadProps(
-      "DPP",
-      GLOBALS.ProcessProps,
-      test.'process-props' ?: test.dpps ?: null,
-      test.processPropsFile ? "$tfd/$test.processPropsFile"
-      : test.dppsFile ? "$tfd/$test.dppsFile"
-      : test.files ? "$tfd/${test.files}.properties"
-      : test.f ? "$tfd/${test.f}.properties"
-      : test.propsfile ? "$tfd/$test.propsfile"
-      : test.pf ? "$tfd/$test.pf"
-      : GLOBALS.DPPsFile ? "$GLOBALS.testfilesDir/$GLOBALS.DPPsFile"
-      : null
-    )
+    // this.dpps = loadProperties(
+    //   "DPP", [GLOBALS.ProcessProps, test.DPPs, test.moreDPPs]
+    // )
+    // this.dpps = loadProps(
+    //   "DPP",
+    //   GLOBALS.ProcessProps,
+    //   test.'process-props' ?: test.dpps ?: null,
+    //   test.processPropsFile ? "$tfd/$test.processPropsFile"
+    //   : test.dppsFile ? "$tfd/$test.dppsFile"
+    //   : test.propsfile ? "$tfd/$test.propsfile"
+    //   : test.pf ? "$tfd/$test.pf"
+    //   : GLOBALS.DPPsFile ? "$GLOBALS.testfilesDir/$GLOBALS.DPPsFile"
+    //   : null
+    // )
     this.dataContext = dataContext
     this.testfilesDir = tfd
   }
@@ -132,6 +132,67 @@ class TestMapper {
     } else {
       return new ByteArrayInputStream("".getBytes("UTF-8"))
     }
+  }
+
+
+  private String getDataFilenameFromValue(value) {
+    // println value
+    def filename = (value =~ /(?s)^\s*(?:@?file)?\s*\(?'?([^@]+\.\w+)'?\)?\s*$/).findAll()*.last()[0]
+    // println "---------- " + filename
+    return filename
+  }
+
+  private Properties loadProperties(type, propsSourcesArr) {
+    Properties properties = new Properties()
+
+    propsSourcesArr.findAll{it != null}.each {
+
+      Properties propertiesPerSource = new Properties()
+      String propertiesFilename = getDataFilenameFromValue(it)
+
+      if (propertiesFilename) {
+        BufferedReader reader = new BufferedReader(new FileReader("${GlobalOptions.workingDir}/$propertiesFilename"));
+        String line
+        while ((line = reader.readLine()) != null) {
+          def propArr = line.split(/\s*=\s*/, 2)
+          if (line && !(line =~ /^\s*#/)) {
+            if      (type == "DPP" && !(line =~ /^\s*document\.dynamic\.userdefined\./)) {
+              propertiesPerSource.load(new StringReader(line))
+            }
+            else if (type == "ddp" &&  (line =~ /^\s*document\.dynamic\.userdefined\./)) {
+              propertiesPerSource.load(new StringReader(line))
+            }
+          }
+        }
+        reader.close();
+      }
+
+      else {
+        if (it instanceof String) {
+          propertiesPerSource.load(new StringReader(it))
+        }
+        else if (it instanceof LinkedHashMap) {
+          propertiesPerSource.putAll(it)
+        }
+      }
+
+      if (propertiesPerSource) {
+        String propsSubDir = propertiesFilename ? propertiesFilename.replaceFirst(/(.*)[\/\\].*/, "\$1") : ""
+        propertiesPerSource.each { k, v ->
+          // println k + "     " + v
+          def valueFilename = getDataFilenameFromValue(v)
+          if (valueFilename) {
+            propertiesPerSource.setProperty(k, new FileReader("${GlobalOptions.workingDir}/$propsSubDir/$valueFilename").text)
+          }
+        }
+
+        properties << propertiesPerSource
+      }
+
+    }
+    
+    // properties.each { println type + ":  " + it }
+    return properties
   }
 
 
@@ -187,13 +248,15 @@ class TestMapper {
     if (properties) {
       String propsSubDir = propsfile ? propsfile.replaceFirst(/(.*)[\/\\].*/, "\$1") : ""
       properties.each { k,v ->
-        if (v =~/@file/) {
-          // String filename = v.replaceFirst(/\s*@file\s*\(?'?(.*?)'?\)?$/, "\$1")
-          String filename = getFilenameFromValue(v)
+
+        def filename = getDataFilenameFromValue(v)
+        if (filename) {
           properties.setProperty(k, new FileReader("${GlobalOptions.workingDir}/$propsSubDir/$filename").text)
         }
+
+
       }
-      // if (type == "DPP") properties.each { println "DPP: " + it}
+      if (type == "DPP") properties.each { println "DPP: " + it}
       // if (type == "ddp") properties.each { println "ddp: " + it}
     }
     return properties
