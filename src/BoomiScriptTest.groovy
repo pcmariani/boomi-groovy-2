@@ -16,24 +16,21 @@ class BoomiScriptTest {
     }
 
     String testSuiteFileName = options.arguments()[0]
-    OPTIONS.workingDir = options.workingDir ?: System.getProperty("user.dir")
-    OPTIONS.mode = "testResultsOnly"
-    OPTIONS.setSuiteOptsFromMode("testResultsOnly")
-
-    // println OPTIONS.suiteOpts
-    // OPTIONS.class.getDeclaredFields().each {println it.getName() + " " + OPTIONS."${it.getName()}"}
+    Globals.workingDir = options.workingDir ?: System.getProperty("user.dir")
+    Globals.mode = "testResultsOnly"
+    Globals.setOptionsFromMode("testResultsOnly")
 
     TestSuiteRunner testSuiteRunner = new TestSuiteRunner()
 
     if (testSuiteFileName) {
-      testSuiteRunner.runTestSuite(testSuiteFileName)
+      Globals.testSuiteFileName = testSuiteFileName
+      testSuiteRunner.runTestSuite()
     }
     else {
       testSuiteRunner.discoverAndRunTestSuites()
     }
 
-    // testSuiteRunner.printResults()
-    // println OPTIONS.suiteOpts
+    testSuiteRunner.printResults()
 
   }
 }

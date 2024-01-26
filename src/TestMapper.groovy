@@ -29,21 +29,29 @@ class TestMapper {
 
       def tfd = doc.testfilesDir ?: Globals.testFilesDir
 
+      InputStream data
+      try {
+        data = getDocumentContents(doc.data)
+      } catch(Exception e) {
+        throw new Exception("Check the syntax around the 'data' tag.")
+      }
+
+      Properties ddps
+      try { 
+        ddps = loadProperties(
+          "ddp", [doc.ddps ?: doc.props ?: doc.ddpsOverride]
+        )
+      } catch(Exception e) {
+        throw new Exception("Check the syntax around the 'ddps' tag.")
+      }
+
+
       dataContext.storeStream(
-        doc.desc ?: doc.files ?: doc.f ?: doc.datafile ?: doc.df ?: "Document " + m,
-        getDocumentContents(doc.data ?: doc.datafile),
-        loadProperties(
-          "ddp",
-          [
-            doc.ddps ?: doc.props ?: doc.docProps ?: doc.propsfile,
-            doc.ddpOverrides
-          ]
-        ),
-        getAssertions(
-          doc.assert ?: doc.a ?: null,
-          test.assert ?: test.a ?: null
-        ),
-        doc.ext ?: doc.e ?: doc.extension ?: test.ext ?: test.e ?: test.extension ?: null
+        doc.desc ?: "Document " + m,
+        data,
+        ddps,
+        getAssertions(doc.assert, test.assert),
+        doc.ext ?: doc.extension ?: test.ext ?: test.extension ?: null
       )
     }
 
@@ -51,49 +59,43 @@ class TestMapper {
 
     this.index = index
     this.desc = desc
-    this.scripts = getExecutionScripts(
-      tfd, test.scripts ?: test.s ?: Globals.scripts
-    )
-    this.dpps = loadProperties(
-      "DPP",
-      [
-        Globals.DPPs,
-        test.DPPs,
-        Globals.DPPsOverride,
-        test.DPPsOverride
-      ]
-    )
+    this.scripts = getExecutionScripts(test.scripts ?: test.script ?: Globals.scripts)
+    this.dpps = loadProperties("DPP", [Globals.DPPs, test.DPPs, Globals.DPPsOverride, test.DPPsOverride])
     this.dataContext = dataContext
     this.testfilesDir = tfd
   }
 
 
 
-  private def getExecutionScripts(tfd, scriptfiles) {
-    def scriptsArr = []
-    if (scriptfiles instanceof String) {
-      scriptfiles = [scriptfiles] as ArrayList
-    }
-    scriptfiles.eachWithIndex { scriptfile, m ->
-      if (scriptfile instanceof String) {
-        scriptsArr << [
-          name: scriptfile,
-          script: new FileInputStream("${Globals.workingDir}/$scriptfile"),
-          output: m == scriptfiles.size() - 1 ? ["all"] : ["xx"],
-        ]
+  private def getExecutionScripts(scriptfiles) {
+    try {
+      def scriptsArr = []
+      if (scriptfiles instanceof String) {
+        scriptfiles = [scriptfiles] as ArrayList
       }
-      else if (scriptfile instanceof LinkedHashMap) {
-        def scriptfileName = scriptfile.keySet()[0]
-        def scriptArgs = scriptfile.values()[0]
+      scriptfiles.eachWithIndex { scriptfile, m ->
+        if (scriptfile instanceof String) {
+          scriptsArr << [
+            name: scriptfile,
+            script: new FileInputStream("${Globals.workingDir}/$scriptfile"),
+            output: m == scriptfiles.size() - 1 ? ["all"] : ["xx"],
+          ]
+        }
+        else if (scriptfile instanceof LinkedHashMap) {
+          def scriptfileName = scriptfile.keySet()[0]
+          def scriptArgs = scriptfile.values()[0]
 
-        scriptsArr << [
-          name: scriptfileName,
-          script: new FileInputStream("${Globals.workingDir}/$scriptfileName"),
-          output: scriptArgs ?: []
-        ]
+          scriptsArr << [
+            name: scriptfileName,
+            script: new FileInputStream("${Globals.workingDir}/$scriptfileName"),
+            output: scriptArgs ?: []
+          ]
+        }
       }
+      return scriptsArr
+    } catch(Exception e) {
+      throw new Exception("Check the syntax around the 'scripts' tag.")
     }
-    return scriptsArr
   }
 
 
@@ -104,6 +106,7 @@ class TestMapper {
     // println "---------- " + filename
     return filename
   }
+
 
 
   private InputStream getDocumentContents(String data) {
@@ -121,6 +124,7 @@ class TestMapper {
       return new ByteArrayInputStream("".getBytes("UTF-8"))
     }
   }
+
 
 
   private Properties loadProperties(type, propsSourcesArr) {

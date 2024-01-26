@@ -18,7 +18,7 @@ class Test {
   }
 
   def run() {
-    def outg = Globals.suiteOpts ?: []
+    def outg = Globals.options ?: []
     // println out
     if (outg.disjoint(["no guides"])) {
       if (this.index > 0) {

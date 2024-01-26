@@ -25,13 +25,12 @@ class BoomiScriptRun {
     String testSuiteFileName = options.arguments()[0]
     Globals.workingDir = options.workingDir ?: System.getProperty("user.dir")
     Globals.mode = "run"
-    Globals.setSuiteOptsFromMode("run")
-
-    // Globals.class.getDeclaredFields().each {println it.getName() + " " + Globals."${it.getName()}"}
+    Globals.setOptionsFromMode("run")
 
     if (testSuiteFileName) {
-      TestSuiteRunner testSuiteRunner = new TestSuiteRunner()
-      testSuiteRunner.runTestSuite(testSuiteFileName)
+      Globals.testSuiteFileName = testSuiteFileName
+      TestSuiteRunner testSuiteRunner = new TestSuiteRunner().runTestSuite()
+      // testSuiteRunner.runTestSuite()
     }
     else {
       println "Legacy?"

@@ -4,7 +4,6 @@ import org.yaml.snakeyaml.Yaml
 
 class TestSuite {
   LinkedHashMap testSuiteFileRaw
-  LinkedHashMap GLOBALS
   ArrayList tests
   Boolean suiteFailed
   int numTests
@@ -12,18 +11,22 @@ class TestSuite {
   int numFailedTests
   String testSuiteFileName
 
-  TestSuite(String testSuiteFileName) {
-    this.testSuiteFileName = testSuiteFileName
+  TestSuite() {
+    this.testSuiteFileName = Globals.testSuiteFileName
 
     def testSuiteFilePath = "${Globals.workingDir}/${testSuiteFileName}"
 
-    // if (Globals.testSuiteFileExt == "yaml") {
-    this.testSuiteFileRaw = new Yaml().load((testSuiteFilePath as File).text)
-    // } else if (Globals.testSuiteFileExt == "json") {
-    //   this.testSuiteFileRaw = new JsonSlurper.parseText((testSuiteFilePath as File).text)
-    // }
+    try {
+      // if (Globals.testSuiteFileExt == "yaml") {
+      this.testSuiteFileRaw = new Yaml().load((testSuiteFilePath as File).text)
+      // } else if (Globals.testSuiteFileExt == "json") {
+      //   this.testSuiteFileRaw = new JsonSlurper.parseText((testSuiteFilePath as File).text)
+      // }
+    } catch(Exception e) {
+      throw new Exception("BAD YAML")
+    }
 
-    Globals.suiteOpts.addAll(testSuiteFileRaw.remove('OPTIONS') ?: [])
+    Globals.options.addAll(testSuiteFileRaw.remove('OPTIONS') ?: [])
 
     LinkedHashMap g = testSuiteFileRaw.remove('GLOBALS') ?: [:]
     def scripts = g.scripts ?: g.script
@@ -39,7 +42,13 @@ class TestSuite {
     testSuiteFileRaw.eachWithIndex { testRaw, index ->
 
       TestMapper mappedTest = new TestMapper(testRaw, index)
-      mappedTest.transformTestYaml()
+      try {
+        mappedTest.transformTestYaml()
+      } catch(Exception e) {
+        throw new Exception("Test-suite file validation: \n    " + e.getMessage())
+        println "THERE WAS A BIG ERROR"
+      }
+
 
       this.tests << new Test(
         mappedTest.desc,
@@ -51,17 +60,6 @@ class TestSuite {
     }
   }
 
-  private LinkedHashMap parseGlobals(GLOBALS) {
-    def globals = [:]
-    globals.scriptfiles = GLOBALS.scripts ?: GLOBALS.s
-    if (globals.scriptfiles instanceof String) {
-      globals.scriptfiles = [globals.scriptfiles]
-    }
-    globals.ProcessProps = GLOBALS.'process-props' ?: GLOBALS.dpps
-    globals.DPPsFile = GLOBALS.processPropsFile ?: GLOBALS.dppsFile
-    globals.testfilesDir = GLOBALS.testfilesDir ?: GLOBALS.tfDir ?: "."
-    return globals
-  }
 
   public def run() {
 
@@ -74,96 +72,7 @@ class TestSuite {
     this.numTests = tests.testFailed.size()
     this.suiteFailed = numFailedTests > 0 ? true : false
 
-    if (Globals.mode == "testResultsOnly") {
-      // this.printResult()
-    }
-
-    return this
+    // return this
   }
-
-  public def printResult() {
-    if (this.suiteFailed) {
-      Fmt.p("redReverse", " FAIL ")
-    } else {
-      Fmt.p("greenReverse", " PASS ")
-    }
-    Fmt.pl("white", " " + testSuiteFileName)
-
-    println ""
-
-    def globalScripts = this.GLOBALS.scriptfiles.collect { it instanceof LinkedHashMap ? it.keySet()[0] : it}
-    Fmt.pl("grey", Fmt.l1 + (globalScripts.size() == 1 ? "Script" : "Scripts") )
-    globalScripts.each { script ->
-      Fmt.pl("magenta", Fmt.l2 + script)
-    }
-
-    println ""
-
-    // Fmt.pl("white", "  Tests")
-
-    this.tests.each { t ->
-      print Fmt.l1
-      if (t.testFailed) {
-        Fmt.p("red", "✗  ")
-      } else {
-        Fmt.p("green", "✓  ")
-      }
-      Fmt.pl("yellow", t.desc)
-      // println t.dataContext.dataContextArr
-
-      t.dataContext.dataContextArr.eachWithIndex { doc, m ->
-
-        if (t.execError?.docIndex == m) {
-
-          def e = t.testError
-
-          print Fmt.l3
-          Fmt.pl("white", m + " " + e.docName)
-
-          print Fmt.l4
-          Fmt.p("grey", "Exception in Script:")
-          Fmt.pl("magenta", " " + e.script)
-
-          print Fmt.l5
-          Fmt.pl("red", e.error
-            .replaceAll(/\n\s*at (?!Script1).*/,"")
-            .replaceFirst(/(Exception:) /, "\$1\n$Fmt.l6")
-            .replaceFirst(/\n.*at .*?(groovy:\d+).*/," (\$1)")
-            .replaceFirst(/\n$/,"")
-          )
-
-        }
-
-        else {
-
-          print Fmt.l3
-          Fmt.pl("white", m + " " + doc.desc)
-
-          if (doc.assertions) {
-            doc.assertions.each { a ->
-              print Fmt.l4
-              if (a.passed == true) {
-                Fmt.p("green", "✓ ")
-                Fmt.pl("grey", " " + a.assert)
-              } else if (a.passed == false) {
-                Fmt.p("red", "✗ ")
-                Fmt.pl("grey", " " + a.assert)
-              } else {
-                Fmt.pl("grey", "－ " + a.assert + " (not evaluated)")
-              }
-            }
-
-          } else {
-            print Fmt.l4
-            Fmt.pl("grey", "－ no assertions")
-          }
-        }
-
-      }
-    }
-    println ""
-
-  }
-
 
 }
