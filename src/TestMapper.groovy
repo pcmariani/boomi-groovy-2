@@ -34,14 +34,16 @@ class TestMapper {
 
       dataContext.storeStream(
         doc.desc ?: doc.files ?: doc.f ?: doc.datafile ?: doc.df ?: "Document " + m,
-        getDocumentContents(
-          doc.data ?: doc.d ?: null,
-          doc.files ? "$tfd/${doc.files}.dat"
-          : doc.f ? "$tfd/${doc.f}.dat"
-          : doc.datafile ? "$tfd/$doc.datafile"
-          : doc.df ? "$tfd/$doc.df"
-          : null
-        ),
+        getDocumentContents(doc.data ?: doc.datafile),
+
+        // getDocumentContents(
+        //   doc.data ?: doc.d ?: null,
+        //   doc.files ? "$tfd/${doc.files}.dat"
+        //   : doc.f ? "$tfd/${doc.f}.dat"
+        //   : doc.datafile ? "$tfd/$doc.datafile"
+        //   : doc.df ? "$tfd/$doc.df"
+        //   : null
+        // ),
         loadProperties("ddp", [doc.props, doc.propsfile]),
         // loadProps(
         //   "ddp",
@@ -64,12 +66,11 @@ class TestMapper {
     this.index = index
     this.desc = desc
     this.scripts = getExecutionScripts(
-      tfd,
-      test.scripts ?: test.s ?: GLOBALS.scriptfiles
+      tfd, test.scripts ?: test.s ?: GLOBALS.scriptfiles
     )
-    // this.dpps = loadProperties(
-    //   "DPP", [GLOBALS.ProcessProps, test.DPPs, test.moreDPPs]
-    // )
+    this.dpps = loadProperties(
+      "DPP", [GLOBALS.ProcessProps, test.DPPs, test.moreDPPs]
+    )
     // this.dpps = loadProps(
     //   "DPP",
     //   GLOBALS.ProcessProps,
@@ -120,19 +121,23 @@ class TestMapper {
 
 
 
-  private InputStream getDocumentContents( String data, String datafile) {
-    if (data =~ /^\s*file/) {
-      def filename = getFilenameFromValue(data)
-      return new FileInputStream("${GlobalOptions.workingDir}/$filename")
-    }
-    else if (datafile) {
-      return new FileInputStream("${GlobalOptions.workingDir}/$datafile")
-    } else if (data) {
-      return new ByteArrayInputStream(data.getBytes("UTF-8"))
-    } else {
-      return new ByteArrayInputStream("".getBytes("UTF-8"))
-    }
-  }
+  // private InputStream getDocumentContents( String data, String datafile) {
+  //   if (data =~ /^\s*file/) {
+  //     def filename = getFilenameFromValue(data)
+  //     return new FileInputStream("${GlobalOptions.workingDir}/$filename")
+  //   }
+  //   else if (datafile) {
+  //     return new FileInputStream("${GlobalOptions.workingDir}/$datafile")
+  //   } else if (data) {
+  //     return new ByteArrayInputStream(data.getBytes("UTF-8"))
+  //   } else {
+  //     return new ByteArrayInputStream("".getBytes("UTF-8"))
+  //   }
+  // }
+  //
+
+
+
 
 
   private String getDataFilenameFromValue(value) {
@@ -141,6 +146,27 @@ class TestMapper {
     // println "---------- " + filename
     return filename
   }
+
+
+  private InputStream getDocumentContents(String data) {
+    def fileName = getDataFilenameFromValue(data)
+    // println "FILENAME: " + fileName
+    if (fileName) {
+      File file = new File("${GlobalOptions.workingDir}/$fileName")
+      if (file.exists()) {
+        // println file.text
+        return new FileInputStream(file)
+      } else {
+        // println data
+        return new ByteArrayInputStream(data.getBytes("UTF-8"))
+      }
+    } else if (data) {
+      return new ByteArrayInputStream(data.getBytes("UTF-8"))
+    } else {
+      return new ByteArrayInputStream("".getBytes("UTF-8"))
+    }
+  }
+
 
   private Properties loadProperties(type, propsSourcesArr) {
     Properties properties = new Properties()
@@ -194,74 +220,6 @@ class TestMapper {
     // properties.each { println type + ":  " + it }
     return properties
   }
-
-
-
-  private Properties loadProps(type, globalPropsStr, propsStr, propsfile) {
-    Properties properties = new Properties()
-
-    // if (type == "DPP") println "DPP: " + globalPropsStr
-
-    // if (data =~ /^\s*file/) {
-    //   def filename = getFilenameFromValue(data)
-    //   return new FileInputStream("${GlobalOptions.workingDir}/$filename")
-    // }
-    //
-
-    if (propsfile) {
-      BufferedReader reader = new BufferedReader(new FileReader("${GlobalOptions.workingDir}/$propsfile"));
-      String line
-      while ((line = reader.readLine()) != null) {
-        def propArr = line.split(/\s*=\s*/, 2)
-        if (line && !(line =~ /^\s*#/)) {
-          if (type == "DPP"
-              && !(line =~ /^\s*document\.dynamic\.userdefined\./)) {
-            properties.load(new StringReader(line))
-              }
-          else if (type == "ddp" 
-              && (line =~ /^\s*document\.dynamic\.userdefined\./)) {
-            properties.load(new StringReader(line))
-              }
-        }
-      }
-      reader.close();
-    }
-
-    if (globalPropsStr) {
-      if (globalPropsStr instanceof String) {
-        properties.load(new StringReader(globalPropsStr))
-      }
-      else if (globalPropsStr instanceof LinkedHashMap) {
-        properties.putAll(globalPropsStr)
-      }
-    }
-
-    if (propsStr) {
-      if (propsStr instanceof String) {
-        properties.load(new StringReader(propsStr))
-      }
-      else if (propsStr instanceof LinkedHashMap) {
-        properties.putAll(propsStr)
-      }
-    }
-
-    if (properties) {
-      String propsSubDir = propsfile ? propsfile.replaceFirst(/(.*)[\/\\].*/, "\$1") : ""
-      properties.each { k,v ->
-
-        def filename = getDataFilenameFromValue(v)
-        if (filename) {
-          properties.setProperty(k, new FileReader("${GlobalOptions.workingDir}/$propsSubDir/$filename").text)
-        }
-
-
-      }
-      if (type == "DPP") properties.each { println "DPP: " + it}
-      // if (type == "ddp") properties.each { println "ddp: " + it}
-    }
-    return properties
-  }
-
 
 
 
