@@ -1,10 +1,10 @@
-class GlobalOptions {
+class Globals {
     static String workingDir
     static String mode
     static Set suiteOpts = []
     static ArrayList scripts
-    static def dynamicProcessPropsRaw
-    static def dynamicProcessPropsOverridesRaw
+    static def DPPs
+    static def DPPsOverride
     static String testFilesDir
 
     static setSuiteOptsFromMode(mode) {
