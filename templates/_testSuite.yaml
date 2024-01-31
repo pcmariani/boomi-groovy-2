@@ -1,0 +1,21 @@
+OPTIONS:
+  - data
+  - ddps
+  - DPPs
+  # - assertions
+  # - no labels
+  # - no println
+  # - no files
+
+GLOBALS:
+  scripts:
+    -  ###script
+  DPPs:
+    DPP_Hello: world
+# ---
+
+Test 1:
+  DPPs: ###props
+  docs:
+    - data: ###data
+      ddps: ###props

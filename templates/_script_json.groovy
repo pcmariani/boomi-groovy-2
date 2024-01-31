@@ -18,6 +18,6 @@ for( int i = 0; i < dataContext.getDataCount(); i++ ) {
     dataContext.storeStream(is, props);
 }
 
-private static String prettyJson(def thing) { 
+String prettyJson(def thing) { 
     return JsonOutput.prettyPrint(JsonOutput.toJson(thing))
 }
