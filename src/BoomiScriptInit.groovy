@@ -23,11 +23,35 @@ class BoomiScriptRun {
       return
     }
 
+    def workingDir = options.w ?: System.getProperty("user.dir")
+
     File userDir = new File(System.getProperty("user.dir"))
     def templatesFolder = userDir.getParent().toString() + "/templates"
 
-    def workingDir = options.w ?: System.getProperty("user.dir")
-    def scriptBase = options.s ?: options.arguments()[0] -~/.groovy$/
+    String existingPropsFile
+    String existingDataFile
+
+    new File(workingDir).traverse(type: groovy.io.FileType.FILES, maxDepth: 0) { file ->
+      if (file.getName() =~ /\.properties/) {
+        existingPropsFile = file.getName()
+      } else {
+        existingDataFile = file.getName()
+      }
+    }
+    // println propsFile
+    // println dataFile
+
+    // println ""
+    print "Name your new boomi groovy script > "
+    String scriptName = System.in.newReader().readLine()
+    
+    // println "Create a folder?"
+    // String optCreateFolder = System.in.newReader().readLine()
+    // println "Your name is ${System.in.newReader().readLine()}"
+    // println name
+
+
+    def scriptBase = scriptName ?: options.s ?: options.arguments()[0] -~/.groovy$/
 
     if (options.f) {
       workingDir += "/$scriptBase"
@@ -38,52 +62,82 @@ class BoomiScriptRun {
       }
       else {
         println "INFO: creating Folder $scriptBase"
-        // folder.mkdir()
+        folder.mkdir()
       }
     }
 
-    println options.t
+    // println options.t
     def script = scriptBase + ".groovy"
     // println "script:    " + script
     def testSuite = "_test_" + (options.t != false ? options.t : scriptBase) + ".yaml"
-    println "testSuite: " + testSuite
-    def data = options.d ?: scriptBase + ".dat"
+    // println "testSuite: " + testSuite
+    def data = existingDataFile ?: options.d ?: scriptBase + ".dat"
     // println "data:      " + data
-    def props = options.p ?: scriptBase + ".properties"
+    def props = existingPropsFile ?: options.p ?: scriptBase + ".properties"
     // println "props:     " + props
-    def lang = options.l
+    def lang = existingDataFile -~/^.*\./ ?: options.l
     // println lang
+
+    File testSuiteFile = new File(workingDir + "/" + testSuite)
+    if (testSuiteFile.exists()) {
+      println "INFO: Test file exists - SKIPPING"
+    } else {
+      def testSuiteTemplateFile = new File("$templatesFolder/_testSuite.yaml")
+      println "INFO: Writing \'${testSuiteFile.getName()}\'"
+      testSuiteFile.write testSuiteTemplateFile.text
+      .replaceAll("###script", script)
+      .replaceAll("###data", data)
+      .replaceAll("###props", props)
+    }
+
 
     File scriptFile = new File(workingDir + "/" + script)
     if (scriptFile.exists()) {
       println "INFO: Script file exists - SKIPPING"
     } else {
-      File templateFile
+      File scriptTemplateFile
       if (lang) {
-        templateFile = new File("$templatesFolder/_template_${lang}.b.groovy")
-        if (!templateFile.exists()) {
-          println "WARNING: \'$templateFile\' does not exist"
+        scriptTemplateFile = new File("$templatesFolder/_script_${lang}.groovy")
+        if (!scriptTemplateFile.exists()) {
+          println "WARNING: \'$scriptTemplateFile\' does not exist"
           println "WHAT TO DO NOW"
         }
       } else {
-        templateFile = new File("$templatesFolder/template.b.groovy")
+        scriptTemplateFile = new File("$templatesFolder/_script_ff.groovy")
       }
       println "INFO: Writing \'${scriptFile.getName()}\'"
-      scriptFile.write templateFile.text
+      scriptFile.write scriptTemplateFile.text
     }
 
-    File testSuiteFile = new File(workingDir + "/" + testSuite)
-    println testSuiteFile
-    if (testSuiteFile.exists()) {
-      println "WARNING: Test file exists - SKIPPING"
+
+    File dataFile = new File(workingDir + "/" + data)
+    if (dataFile.exists()) {
+      println "INFO: data file exists - SKIPPING"
     } else {
-      def testSuiteTemplateFile = new File("$templatesFolder/template_testSuite.yaml")
-      testSuiteFile.write testSuiteTemplateFile.text
-        .replaceAll("###script", script)
-        .replaceAll("###data", data)
-        .replaceAll("###props", props)
+      File dataTemplateFile
+      if (lang) {
+        dataTemplateFile = new File("$templatesFolder/_data_${lang}.groovy")
+        if (!dataTemplateFile.exists()) {
+          println "WARNING: \'$dataTemplateFile\' does not exist"
+          println "WHAT TO DO NOW"
+        }
+      } else {
+        dataTemplateFile = new File("$templatesFolder/_data.csv")
+      }
+      println "INFO: Writing \'${dataFile.getName()}\'"
+      dataFile.write dataTemplateFile.text
     }
 
+    if (props) {
+      File propsFile = new File(workingDir + "/" + props)
+      if (propsFile.exists()) {
+        println "INFO: props file exists - SKIPPING"
+      } else {
+        File propsTemplateFile = new File("$templatesFolder/_props.properties")
+        println "INFO: Writing \'${propsFile.getName()}\'"
+        propsFile.write propsTemplateFile.text
+      }
+    }
 
 
   }

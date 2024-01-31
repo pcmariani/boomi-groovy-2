@@ -1,4 +1,5 @@
 class Globals {
+    static Boolean debug
     static String workingDir
     static String testSuiteFileName
     static String mode

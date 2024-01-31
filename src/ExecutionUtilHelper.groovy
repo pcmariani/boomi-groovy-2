@@ -4,18 +4,19 @@ class ExecutionUtilHelper {
     static def dynamicProcessProperties = new Properties();
 
     static void setDynamicProcessProperty(String key, String value, boolean persist) {
-        dynamicProcessProperties.setProperty(key, value)
+        this.dynamicProcessProperties.setProperty(key, value)
     }
 
     static def getDynamicProcessProperty(String key) {
-        return dynamicProcessProperties.getProperty(key)
+        return this.dynamicProcessProperties.getProperty(key)
     }
 
-    static void printDynamicProcessProperties() {
-        dynamicProcessProperties.each { k,v ->
+    static void printDynamicProcessProperties(Boolean isPrintingDataAlso) {
+      // println out
+        this.dynamicProcessProperties.each { k,v ->
             println Fmt.cyan + k.replaceFirst("document.dynamic.userdefined.","") + Fmt.blue + ": " + Fmt.off + v
         }
-        println ""
+        if (this.dynamicProcessProperties && isPrintingDataAlso) println ""
     }
 
     static Logger getBaseLogger() {

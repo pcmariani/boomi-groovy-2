@@ -132,11 +132,12 @@ class DataContext2 {
     is.reset()
   }
 
-  void printProperties(int index) {
-    this.dataContextArr[index]?.props.each { k,v ->
+  void printProperties(int index, Boolean isPrintingDataAlso) {
+    def dc = this.dataContextArr[index]
+    dc?.props.each { k,v ->
       println Fmt.green + k.replaceFirst("document.dynamic.userdefined.","") + Fmt.blue + ": " + Fmt.off + v
     }
-    println ""
+    if (dc?.props && isPrintingDataAlso) println ""
   }
 
   void writeFile(int index, String workingDir, String testDesc, String scriptDesc) {

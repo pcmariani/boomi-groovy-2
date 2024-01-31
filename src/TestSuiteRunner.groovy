@@ -17,7 +17,13 @@ class TestSuiteRunner {
       resultsTestSuites << ts
     } catch(Exception e) {
       println "ERROR RUNNING TESTSUITE: " + Globals.testSuiteFileName
-      println "  " + e.getMessage()
+      // org.codehaus.groovy.runtime.StackTraceUtils.sanitize(e).printStackTrace()
+      org.codehaus.groovy.runtime.StackTraceUtils.sanitize(e)
+      // println e.toString().replaceAll("Exception: ", "Exception: \n")
+      // Fmt.pl("red", e.toString().replaceAll("Exception: ", "Exception: \n"))
+      println e.getMessage()
+      if (Globals.debug) println "     at " + e.stackTrace.head()
+      // println e.printStackTrace()
     }
   }
 

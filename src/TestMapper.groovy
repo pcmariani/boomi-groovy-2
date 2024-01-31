@@ -30,20 +30,20 @@ class TestMapper {
       def tfd = doc.testfilesDir ?: Globals.testFilesDir
 
       InputStream data
-      try {
+      // try {
         data = getDocumentContents(doc.data)
-      } catch(Exception e) {
-        throw new Exception("Check the syntax around the 'data' tag.")
-      }
+      // } catch(Exception e) {
+      //   throw new Exception("Check the syntax around the 'data' tag.")
+      // }
 
       Properties ddps
-      try { 
+      // try { 
         ddps = loadProperties(
-          "ddp", [doc.ddps ?: doc.props ?: doc.ddpsOverride]
+          "ddp", [doc.ddps ?: doc.props, doc.ddpsOverride]
         )
-      } catch(Exception e) {
-        throw new Exception("Check the syntax around the 'ddps' tag.")
-      }
+      // } catch(Exception e) {
+      //   throw new Exception("Check the syntax around the 'ddps' tag.")
+      // }
 
 
       dataContext.storeStream(
@@ -59,7 +59,11 @@ class TestMapper {
 
     this.index = index
     this.desc = desc
+    try {
     this.scripts = getExecutionScripts(test.scripts ?: test.script ?: Globals.scripts)
+    } catch(Exception e) {
+      throw new Exception("Error with scripts: " + e.getMessage())
+    }
     this.dpps = loadProperties("DPP", [Globals.DPPs, test.DPPs, Globals.DPPsOverride, test.DPPsOverride])
     this.dataContext = dataContext
     this.testfilesDir = tfd
@@ -68,7 +72,7 @@ class TestMapper {
 
 
   private def getExecutionScripts(scriptfiles) {
-    try {
+    // try {
       def scriptsArr = []
       if (scriptfiles instanceof String) {
         scriptfiles = [scriptfiles] as ArrayList
@@ -93,16 +97,16 @@ class TestMapper {
         }
       }
       return scriptsArr
-    } catch(Exception e) {
-      throw new Exception("Check the syntax around the 'scripts' tag.")
-    }
+    // } catch(Exception e) {
+    //   throw new Exception("Check the syntax around the 'scripts' tag.")
+    // }
   }
 
 
 
   private String getFilenameFromValue(value) {
     // println value
-    def filename = (value =~ /(?s)^\s*(?:@?file)?\s*\(?'?([^@]+\.\w+)'?\)?\s*$/).findAll()*.last()[0]
+    def filename = (value =~ /(?s)^\s*(?:@?file)?\s*\(?'?([^@]{1,240}\.[A-Za-z]\w{1,14})'?\)?\s*$/).findAll()*.last()[0]
     // println "---------- " + filename
     return filename
   }
@@ -162,11 +166,13 @@ class TestMapper {
       }
 
       if (propertiesPerSource) {
-        String propsSubDir = propertiesFilename ? propertiesFilename.replaceFirst(/(.*)[\/\\].*/, "\$1") : ""
+        String propsSubDir = propertiesFilename?.contains(/[\/\\]/) ? propertiesFilename.replaceFirst(/[\/\\].*/, "") : ""
+        // println type + " " + propsSubDir
         propertiesPerSource.each { k, v ->
-          // println k + "     " + v
+          // println k + " :: " + v
           def valueFilename = getFilenameFromValue(v)
           if (valueFilename) {
+            // println "filename + " + type + " " + it + " " + valueFilename
             propertiesPerSource.setProperty(k, new FileReader("${Globals.workingDir}/$propsSubDir/$valueFilename").text)
           }
         }

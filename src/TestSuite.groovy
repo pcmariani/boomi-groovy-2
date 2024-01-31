@@ -1,3 +1,4 @@
+// import org.codehaus.groovy.runtime.StackTraceUtils 
 @Grab('org.yaml:snakeyaml:1.17')
 import org.yaml.snakeyaml.Yaml
 // import groovy.json.JsonSlurper
@@ -16,19 +17,25 @@ class TestSuite {
 
     def testSuiteFilePath = "${Globals.workingDir}/${testSuiteFileName}"
 
-    try {
+    // try {
       // if (Globals.testSuiteFileExt == "yaml") {
       this.testSuiteFileRaw = new Yaml().load((testSuiteFilePath as File).text)
       // } else if (Globals.testSuiteFileExt == "json") {
       //   this.testSuiteFileRaw = new JsonSlurper.parseText((testSuiteFilePath as File).text)
       // }
-    } catch(Exception e) {
-      throw new Exception("BAD YAML")
-    }
+    // } catch(Exception e) {
+    //   org.codehaus.groovy.runtime.StackTraceUtils
+    //     .sanitize(e).printStackTrace()
+    //   // StackTraceUtils.sanitize(e)
+    //   // e.stackTrace.head().lineNumber
+    //   // Globals.debug ? e.printStackTrace() : "BAD YAML"
+    //   // throw new Exception(Globals.debug ? e.getMessage() : "BAD YAML")
+    //   // throw new Exception("BAD YAML")
+    // }
 
-    Globals.options.addAll(testSuiteFileRaw.remove('OPTIONS') ?: [])
+    Globals.options.addAll(testSuiteFileRaw.remove('OPTIONS') ?: testSuiteFileRaw.remove('OPTS')?: [])
 
-    LinkedHashMap g = testSuiteFileRaw.remove('GLOBALS') ?: [:]
+    LinkedHashMap g = testSuiteFileRaw.remove('GLOBALS') ?: testSuiteFileRaw.remove('GLOBAL') ?: [:]
     def scripts = g.scripts ?: g.script
 
     Globals.scripts = scripts instanceof String ? [scripts] : scripts
@@ -42,12 +49,12 @@ class TestSuite {
     testSuiteFileRaw.eachWithIndex { testRaw, index ->
 
       TestMapper mappedTest = new TestMapper(testRaw, index)
-      try {
+      // try {
         mappedTest.transformTestYaml()
-      } catch(Exception e) {
-        throw new Exception("Test-suite file validation: \n    " + e.getMessage())
-        println "THERE WAS A BIG ERROR"
-      }
+      // } catch(Exception e) {
+      //   throw new Exception("Test-suite file validation: \n    " + e.getMessage())
+      //   println "THERE WAS A BIG ERROR"
+      // }
 
 
       this.tests << new Test(

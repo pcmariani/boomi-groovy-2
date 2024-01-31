@@ -20,7 +20,7 @@ class Test {
   def run() {
     def outg = Globals.options ?: []
     // println out
-    if (outg.disjoint(["no guides"])) {
+    if (outg.disjoint(["no labels"])) {
       if (this.index > 0) {
         println ""
         println Fmt.green + "-------------------------------------------------------------------------" + Fmt.off
@@ -44,7 +44,7 @@ class Test {
       ArrayList out = scriptObj.output + outg
       // println out
 
-      if (this.scripts.size() > 1 && out.disjoint(["no guides"])) {
+      if (this.scripts.size() > 1 && out.disjoint(["no labels"])) {
         println ""
         Fmt.p("magenta", scriptObj.name)
         Fmt.pl("grey", " - " + this.desc)
@@ -62,34 +62,34 @@ class Test {
 
       if (!out.disjoint(["no println"])) {
         script = script
-        .replaceAll("println", "// println")
+        .replaceAll(/(.*?)println/, "// \$1 println")
       }
 
-      if (out.disjoint(["no guides"])) {
+      if (out.disjoint(["no labels"])) {
         script = script
         .replaceFirst(/(.*dataContext.getDataCount\(\).*)/,
         "\$1; if (dataContext.getDataCount() > 1) println \"${Fmt.blue}DOCUMENT\" + i.toString() + \": ${Fmt.magenta}\" + dataContext.getDesc(i) + \"${Fmt.off}\"")
       }
 
-      if (out.disjoint(["no results", "no props"])) {
+      if (!out.disjoint(["props", "dpps", "DPPs"])) {
         script = script
         .replaceFirst(/(.*dataContext.storeStream.*)/,
-        "\$1; ExecutionUtil.printDynamicProcessProperties(); ")
+        "\$1; ExecutionUtil.printDynamicProcessProperties(${!out.disjoint(["data"])}); ")
       }
 
-      if (out.disjoint(["no results", "no props"])) {
+      if (!out.disjoint(["props", "ddps"])) {
         script = script
         .replaceFirst(/(.*dataContext.storeStream.*)/,
-        "\$1; dataContext.printProperties(i); ")
+        "\$1; dataContext.printProperties(i, ${!out.disjoint(["data"])}); ")
       }
 
-      if (out.disjoint(["no results", "no data"])) {
+      if (!out.disjoint(["data"])) {
         script = script
         .replaceFirst(/(.*dataContext.storeStream.*)/,
         "\$1; dataContext.printData(i); ")
       }
 
-      if (out.disjoint(["no results", "no assertions"])) {
+      if (!out.disjoint(["assertions"])) {
         script = script
         .replaceFirst(/(.*dataContext.storeStream.*)/,
         "\$1; dataContext.printAssertions(i); ")
@@ -127,15 +127,12 @@ class Test {
           System.exit(1)
         }
 
-        // dataContext.close()
         break
       }
 
     }
 
     testFailed = true in this.dataContext.hasFailedAssertions || this.hasFailedExec ? true : false
-
-    // this.dataContext.close()
 
   }
 }

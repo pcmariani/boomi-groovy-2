@@ -6,8 +6,9 @@ class BoomiScriptRun {
     )
 
     cli.with {
-      h  longOpt: 'help', 'Show usage'
-      w  longOpt: 'workingDir', args: 1, argName: 'dir', 'Present Working Directory'
+      h   longOpt: 'help', 'Show usage'
+      w   longOpt: 'workingDir', args: 1, argName: 'dir', 'Present Working Directory'
+      dbg longOpt: 'debug', type: boolean, argName: 'debug', 'Print Debug Info'
       // s  longOpt: 'script', args: 1, argName: 'script', 'If not using a testsuite file: Script Filename'
       // d  longOpt: 'document', args: 1, argName: 'document', 'If not using a testsuite file: Document Filename'
       // p  longOpt: 'properties', args: 1, argName: 'properties', 'If not using a testsuite file: Properties Filename'
@@ -26,6 +27,7 @@ class BoomiScriptRun {
     Globals.workingDir = options.workingDir ?: System.getProperty("user.dir")
     Globals.mode = "run"
     Globals.setOptionsFromMode("run")
+    Globals.debug = options.debug
 
     if (testSuiteFileName) {
       Globals.testSuiteFileName = testSuiteFileName
