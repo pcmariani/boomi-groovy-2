@@ -60,7 +60,7 @@ class TestMapper {
     this.index = index
     this.desc = desc
     try {
-    this.scripts = getExecutionScripts(test.scripts ?: test.script ?: Globals.scripts)
+      this.scripts = getExecutionScripts(test.scripts ?: test.script ?: Globals.scripts)
     } catch(Exception e) {
       throw new Exception("Error with scripts: " + e.getMessage())
     }
@@ -82,17 +82,17 @@ class TestMapper {
           scriptsArr << [
             name: scriptfile,
             script: new FileInputStream("${Globals.workingDir}/$scriptfile"),
-            output: m == scriptfiles.size() - 1 ? ["all"] : ["xx"],
+            opts: [:]
           ]
         }
         else if (scriptfile instanceof LinkedHashMap) {
           def scriptfileName = scriptfile.keySet()[0]
-          def scriptArgs = scriptfile.values()[0]
+          def scriptOpts = scriptfile.values()[0]
 
           scriptsArr << [
             name: scriptfileName,
             script: new FileInputStream("${Globals.workingDir}/$scriptfileName"),
-            output: scriptArgs ?: []
+            opts: OptsHelper.processOpts(scriptOpts) ?: [:]
           ]
         }
       }
@@ -118,7 +118,7 @@ class TestMapper {
     if (fileName) {
       File file = new File("${Globals.workingDir}/$fileName")
       if (file.exists()) {
-        return new FileInputStream(file)
+        return new ByteArrayInputStream(file.getText().getBytes("UTF-8"))
       } else {
         return new ByteArrayInputStream(data.getBytes("UTF-8"))
       }
@@ -166,7 +166,7 @@ class TestMapper {
       }
 
       if (propertiesPerSource) {
-        String propsSubDir = propertiesFilename?.contains(/[\/\\]/) ? propertiesFilename.replaceFirst(/[\/\\].*/, "") : ""
+        String propsSubDir = (propertiesFilename =~ /[\/\\]/) ? propertiesFilename.replaceFirst(/[\/\\].*/, "") : ""
         // println type + " " + propsSubDir
         propertiesPerSource.each { k, v ->
           // println k + " :: " + v

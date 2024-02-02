@@ -132,11 +132,37 @@ class DataContext2 {
     is.reset()
   }
 
-  void printProperties(int index, Boolean isPrintingDataAlso) {
+  void printProperties(int index, String ddpsList, Boolean isPrintingDataAlso) {
+
     def dc = this.dataContextArr[index]
-    dc?.props.each { k,v ->
-      println Fmt.green + k.replaceFirst("document.dynamic.userdefined.","") + Fmt.blue + ": " + Fmt.off + v
-    }
+
+      if (ddpsList) {
+        ArrayList ddpsArr = ddpsList.split(",")
+
+        ddpsArr.each { ddpName ->
+          ddpName = ddpName.replaceFirst("document.dynamic.userdefined.","")
+          String key = "document.dynamic.userdefined.$ddpName".trim()
+
+          if (key in dc?.props.keySet()) {
+            String val = dc?.props."$key"
+            if (val =~ /^[\[\{]/) {
+              val = Fmt.toPrettyJson(val)
+            }
+            println Fmt.green + ddpName + Fmt.blue + ": " + Fmt.off + val
+          } else {
+            println Fmt.red + ddpName + Fmt.blue + ": " + Fmt.yellow + "<-- no ddp with this name" + Fmt.off
+          }
+
+        }
+      }
+      else {
+        dc?.props.each { key, val ->
+          if (val =~ /^[\[\{]/) {
+            val = Fmt.toPrettyJson(val)
+          }
+          println Fmt.green + key.replaceFirst("document.dynamic.userdefined.","") + Fmt.blue + ": " + Fmt.off + val
+        }
+      }
     if (dc?.props && isPrintingDataAlso) println ""
   }
 

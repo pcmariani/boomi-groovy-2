@@ -19,8 +19,10 @@ class Test {
 
   def run() {
     def outg = Globals.options ?: []
-    // println out
-    if (outg.disjoint(["no labels"])) {
+    LinkedHashMap globalOpts = Globals.optsMap ?: []
+    ArrayList globalOptsKeys = globalOpts.keySet()
+
+    if (!("no labels" in globalOptsKeys)) {
       if (this.index > 0) {
         println ""
         println Fmt.green + "-------------------------------------------------------------------------" + Fmt.off
@@ -41,10 +43,10 @@ class Test {
       def scriptObj = this.scripts[k]
       // dataContext.setCurrentScriptName(scriptObj.name)
 
-      ArrayList out = scriptObj.output + outg
-      // println out
+      LinkedHashMap opts = globalOpts + scriptObj.opts
+      ArrayList optsKeys = opts.keySet()
 
-      if (this.scripts.size() > 1 && out.disjoint(["no labels"])) {
+      if (this.scripts.size() > 1 && !("no labels" in optsKeys)) {
         println ""
         Fmt.p("magenta", scriptObj.name)
         Fmt.pl("grey", " - " + this.desc)
@@ -60,42 +62,43 @@ class Test {
             "\$1; dataContext.evalAssertions(i, ExecutionUtil); ")
       }
 
-      if (!out.disjoint(["no println"])) {
+      if ("no println" in optsKeys) {
         script = script
         .replaceAll(/(.*?)println/, "// \$1 println")
       }
 
-      if (out.disjoint(["no labels"])) {
+      if (!("no labels" in optsKeys)) {
         script = script
         .replaceFirst(/(.*dataContext.getDataCount\(\).*)/,
         "\$1; if (dataContext.getDataCount() > 1) println \"${Fmt.blue}DOCUMENT\" + i.toString() + \": ${Fmt.magenta}\" + dataContext.getDesc(i) + \"${Fmt.off}\"")
       }
 
-      if (!out.disjoint(["props", "dpps", "DPPs"])) {
+      if ("DPPs" in optsKeys) {
         script = script
         .replaceFirst(/(.*dataContext.storeStream.*)/,
-        "\$1; ExecutionUtil.printDynamicProcessProperties(${!out.disjoint(["data"])}); ")
+        "\$1; ExecutionUtil.printDynamicProcessProperties(\"${opts.DPPs.join(",")}\", true); ")
       }
 
-      if (!out.disjoint(["props", "ddps"])) {
+      if ("ddps" in optsKeys) {
+      // if (!out.disjoint(["props", "ddps"])) {
         script = script
         .replaceFirst(/(.*dataContext.storeStream.*)/,
-        "\$1; dataContext.printProperties(i, ${!out.disjoint(["data"])}); ")
+        "\$1; dataContext.printProperties(i, \"${opts.ddps.join(",")}\", true); ")
       }
 
-      if (!out.disjoint(["data"])) {
+      if ("data" in optsKeys) {
         script = script
         .replaceFirst(/(.*dataContext.storeStream.*)/,
         "\$1; dataContext.printData(i); ")
       }
 
-      if (!out.disjoint(["assertions"])) {
+      if ("assertions" in optsKeys) {
         script = script
         .replaceFirst(/(.*dataContext.storeStream.*)/,
         "\$1; dataContext.printAssertions(i); ")
       }
 
-      if (out.disjoint(["no files"]) && k == this.scripts.size() - 1) {
+      if ("no files" in optsKeys && k == this.scripts.size() - 1) {
         script = script
         .replaceFirst(/(.*dataContext.storeStream.*)/,
         "\$1; if (dataContext.getExtension(i)) dataContext.writeFile(i, \"${Globals.workingDir}\", \"$test.desc\", \"$scriptObj.name\"); ")
@@ -121,7 +124,7 @@ class Test {
         // def padChar = "| "
         // println padChar + sw.toString().replaceAll(/\n/, "\n$padChar ").replaceAll(/\n.*?\(Unknown Source\)\n/, "\n").replaceFirst(/\$padChar\s*$/,"")
 
-        if (out.disjoint(["no errors"])) {
+      if ("no errors" in optsKeys) {
           // println sw.toString()
           Fmt.pl("red", sw.toString())
           System.exit(1)

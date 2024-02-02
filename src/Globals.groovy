@@ -4,6 +4,7 @@ class Globals {
     static String testSuiteFileName
     static String mode
     static Set options = []
+    static LinkedHashMap optsMap = [:]
     static ArrayList scripts
     static def DPPs
     static def DPPsOverride

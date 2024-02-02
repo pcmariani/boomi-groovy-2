@@ -1,3 +1,4 @@
+import groovy.json.JsonSlurper
 import groovy.json.JsonOutput;
 
 class Fmt {
@@ -42,6 +43,10 @@ class Fmt {
     print colors[color] + str + colors.off
   }
 
+  static String toPrettyJson(def thing) {
+    def root = new JsonSlurper().parseText(thing)
+    return JsonOutput.prettyPrint(JsonOutput.toJson(root))
+  }
 
   static String json(def thing) {
     return JsonOutput.prettyPrint(JsonOutput.toJson(thing))

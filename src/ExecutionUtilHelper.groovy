@@ -11,12 +11,23 @@ class ExecutionUtilHelper {
         return this.dynamicProcessProperties.getProperty(key)
     }
 
-    static void printDynamicProcessProperties(Boolean isPrintingDataAlso) {
-      // println out
+    static void printDynamicProcessProperties(String DPPsList, Boolean isPrintingDataAlso) {
+      if (DPPsList) {
+        ArrayList DPPsArr = DPPsList.split(",")
+        DPPsArr.each { DPPName ->
+          if (DPPName in this.dynamicProcessProperties.keySet()) {
+            println Fmt.cyan + DPPName + Fmt.blue + ": " + Fmt.off + this.dynamicProcessProperties[DPPName]
+          } else {
+            println Fmt.red + DPPName + Fmt.blue + ": " + Fmt.yellow + "<-- NO DPP WITH THIS NAME" + Fmt.off
+          }
+        }
+      }
+      else {
         this.dynamicProcessProperties.each { k,v ->
-            println Fmt.cyan + k.replaceFirst("document.dynamic.userdefined.","") + Fmt.blue + ": " + Fmt.off + v
+          println Fmt.cyan + k + Fmt.blue + ": " + Fmt.off + v
         }
         if (this.dynamicProcessProperties && isPrintingDataAlso) println ""
+      }
     }
 
     static Logger getBaseLogger() {

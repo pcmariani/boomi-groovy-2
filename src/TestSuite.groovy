@@ -33,7 +33,14 @@ class TestSuite {
     //   // throw new Exception("BAD YAML")
     // }
 
-    Globals.options.addAll(testSuiteFileRaw.remove('OPTIONS') ?: testSuiteFileRaw.remove('OPTS')?: [])
+
+    // Globals.options.addAll(testSuiteFileRaw.remove('OPTIONS') ?: testSuiteFileRaw.remove('OPTS')?: [])
+    def optsRaw = testSuiteFileRaw.remove('OPTIONS') ?: testSuiteFileRaw.remove('OPTS')?: []
+    // Globals.optsMap.putAll(setOpts(optsRaw))
+    Globals.optsMap.putAll(OptsHelper.processOpts(optsRaw))
+
+    // Globals.options.addAll(optsRaw)
+
 
     LinkedHashMap g = testSuiteFileRaw.remove('GLOBALS') ?: testSuiteFileRaw.remove('GLOBAL') ?: [:]
     def scripts = g.scripts ?: g.script
@@ -68,18 +75,14 @@ class TestSuite {
   }
 
 
-  public def run() {
-
+  public void run() {
     tests.each { test ->
       test.run()
     }
-
     this.numFailedTests = tests.testFailed.count(true)
     this.numPassedTests = tests.testFailed.count(false)
     this.numTests = tests.testFailed.size()
     this.suiteFailed = numFailedTests > 0 ? true : false
-
-    // return this
   }
 
 }
