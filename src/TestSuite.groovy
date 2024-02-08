@@ -38,6 +38,7 @@ class TestSuite {
     def optsRaw = testSuiteFileRaw.remove('OPTIONS') ?: testSuiteFileRaw.remove('OPTS')?: []
     // Globals.optsMap.putAll(setOpts(optsRaw))
     Globals.optsMap.putAll(OptsHelper.processOpts(optsRaw))
+    // println Globals.optsMap
 
     // Globals.options.addAll(optsRaw)
 
