@@ -98,7 +98,7 @@ class Test {
         "\$1; dataContext.printAssertions(i); ")
       }
 
-      if ("no files" in optsKeys && k == this.scripts.size() - 1) {
+      if (!("no files" in optsKeys) && k == this.scripts.size() - 1) {
         script = script
         .replaceFirst(/(.*dataContext.storeStream.*)/,
         "\$1; if (dataContext.getExtension(i)) dataContext.writeFile(i, \"${Globals.workingDir}\", \"$test.desc\", \"$scriptObj.name\"); ")
@@ -124,7 +124,7 @@ class Test {
         // def padChar = "| "
         // println padChar + sw.toString().replaceAll(/\n/, "\n$padChar ").replaceAll(/\n.*?\(Unknown Source\)\n/, "\n").replaceFirst(/\$padChar\s*$/,"")
 
-      if ("no errors" in optsKeys) {
+      if (!("no errors" in optsKeys)) {
           // println sw.toString()
           Fmt.pl("red", sw.toString())
           System.exit(1)
