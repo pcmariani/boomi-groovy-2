@@ -23,11 +23,17 @@ class BoomiScriptRun {
       return
     }
 
+    Globals Globals = new Globals(options)
+
     String testSuiteFileName = options.arguments()[0]
-    Globals.workingDir = options.workingDir ?: System.getProperty("user.dir")
+    // Globals.workingDir = options.workingDir ?: System.getProperty("user.dir")
     Globals.mode = "run"
     Globals.setOptionsFromMode("run")
     Globals.debug = options.debug
+
+    def os = System.getProperty("os.name")
+    if (os.contains("Windows")) {
+    }
 
     if (testSuiteFileName) {
       Globals.testSuiteFileName = testSuiteFileName
