@@ -89,18 +89,51 @@ class DataContext2 {
 
   def evalAssertions(int index, ExecutionUtilHelper ExecutionUtil) {
     def dc = dataContextArr[index]
+    if (dc.assertions) {
+      // println Fmt.grey + "Assertions:" + Fmt.off
+      // println Fmt.pl("grey","Assertions:")
+    }
     dc.assertions.each { assertionObj ->
+      String assertion = assertionObj.assert.replaceFirst(/^assert\s+/, "")
+      String assertionSubjectVar = ""
+      String propName
+
+      if (assertion.startsWith("data")) {
+        assertionSubjectVar = "def data = is.text;"
+      } else {
+        propName = (assertion =~ /^(\w+).*/).findAll()*.last()[0]
+        // println propName
+        if (dc.props."document.dynamic.userdefined.$propName") {
+          // println dc.props."document.dynamic.userdefined.$propName"
+          assertionSubjectVar = "def $propName = props.getProperty(\"document.dynamic.userdefined.$propName\"); "
+        }
+        else if (ExecutionUtil.getDynamicProcessProperty(propName)) {
+          // println ExecutionUtil.getDynamicProcessProperty(propName)
+          assertionSubjectVar = "def $propName = ExecutionUtil.getDynamicProcessProperty(\"$propName\"); "
+        } 
+      }
+      // println assertionSubjectVar
+
       try {
-        Eval.xyz(ExecutionUtil, dc.is, dc.props,
-        "def ExecutionUtil = x; InputStream is = y; Properties props = z; assert "
-        + assertionObj.assert
-        .replaceFirst(/(document\.dynamic\.userdefined\.\w+)/, "\'\$1\'")
-        )
-        assertionObj.passed = true
+        if (assertionSubjectVar) {
+          // println Fmt.green + "✓  " +  Fmt.grey + assertion + Fmt.off
+          Eval.xyz(ExecutionUtil, dc.is, dc.props,
+          "def ExecutionUtil = x; InputStream is = y; Properties props = z;"
+            + assertionSubjectVar
+            + "assert $assertion"
+          )
+          assertionObj.passed = true
+          // assertionObj.error = assertion
+        }
+        else {
+          // println Fmt.yellow + "✗  " + Fmt.grey + assertion + Fmt.off + Fmt.yellow + " subject '$propName' not found." + Fmt.off
+          assertionObj.passed = null
+          // assertionObj.error = assertion
+        }
       } catch(AssertionError assertionError) {
         this.hasFailedAssertions = true
         assertionObj.passed = false
-        assertionObj.error = assertionError.toString().take(400)
+        assertionObj.error = assertionError.toString().replaceFirst("is.text", "data").take(400)
       }
       dc.is.reset()
     }
@@ -108,9 +141,65 @@ class DataContext2 {
 
   void printAssertions(int index) {
     dataContextArr[index].assertions.each{ 
-      if (it.error) {
-        println ""
-        println Fmt.red + it.error + Fmt.off
+      // println it.passed
+      if (it.passed == false) {
+        // println ""
+        def errorArr = it.error
+            .replaceFirst(/Assertion failed:\s*/, "")
+            .replaceFirst("assert ", "")
+            .split("\n")
+        // println errorArr
+        print Fmt.red + "   FAIL" + Fmt.grey + ":  " + Fmt.off
+        errorArr.eachWithIndex { line, ind ->
+          if (ind == 0) println Fmt.red + line + Fmt.off
+          else if (ind == 1) println "   " + Fmt.grey + line + Fmt.off
+          // else println Fmt.red + line + Fmt. off
+          else if (ind == 2) {
+            def lineArr = line.split("\\|")
+            print "   "
+            lineArr.eachWithIndex { item, jnd ->
+              if (jnd == 0) print Fmt.grey + item + "|" + Fmt.off
+              if (jnd == 1) print Fmt.red + item + Fmt.off
+            }
+            println ""
+          }
+          else {
+            line = line.replaceFirst(/^\s*/,"")
+            println Fmt.wrapText(Fmt.l4, line)
+            // String indent = "           "
+            // int sectionStart = 0
+            // while (sectionStart < line.size()) {
+            //   // println sectionStart
+            //   if (sectionStart + 80 < line.size()) {
+            //     println indent + line[sectionStart..sectionStart+80]
+            //   }
+            //   else {
+            //     println indent + line[sectionStart..line.size()-1]
+            //   }
+            //   sectionStart = sectionStart + 80
+            // }
+            // int section = line.size()
+            // while (section % 80 > 0) {
+            //   println section
+            //   section = section - 80
+            // }
+            // println "   " + Fmt.off + line + Fmt.off
+          }
+        }
+
+        // println Fmt.red + "FAIL  " + Fmt.grey + it.error
+        //     .replaceFirst(/Assertion failed:\s*/, "")
+        //     .replaceFirst("assert", "") +
+        //   Fmt.off
+        // println Fmt.red + it.error + Fmt.off
+      }
+      else if (it.passed) {
+        // println Fmt.green + "✓  " +  Fmt.grey + it.assert + Fmt.off
+        println Fmt.green + "   PASS" + Fmt.grey + ":  " +  Fmt.grey + it.assert + Fmt.off
+      }
+      else if (it.passed == null) {
+        // println Fmt.yellow + "✗  " + Fmt.grey + it.assert + Fmt.off + Fmt.yellow + " subject not found." + Fmt.off
+        println Fmt.yellow + "   SKIP" + Fmt.grey + ":  " + Fmt.grey + it.assert + Fmt.off + Fmt.yellow + "  <-- SUBJECT NOT FOUND" + Fmt.off
       }
     }
   }
