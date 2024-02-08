@@ -3,6 +3,7 @@ import groovy.json.JsonOutput;
 
 class Fmt {
 
+
   static String l1 = "  "
   static String l2 = "     "
   static String l3 = "       "
@@ -51,5 +52,26 @@ class Fmt {
   static String json(def thing) {
     return JsonOutput.prettyPrint(JsonOutput.toJson(thing))
   }
+
+  static String wrapText(String indent="", String color="", String text) {
+    String NEWLINE = System.lineSeparator()
+    int width = Globals.termWidth - indent.size() - 1
+    int segmentStart = 0
+    StringBuilder sb = new StringBuilder()
+
+    sb.append(color)
+    while (segmentStart < text.size()) {
+      if (segmentStart + width < text.size()) {
+        sb.append(indent + text[segmentStart..segmentStart + width] + NEWLINE)
+      }
+      else {
+        sb.append(indent + text[segmentStart..text.size()-1])
+      }
+      segmentStart += width
+    }
+    sb.append(off)
+    return sb.toString()
+  }
+
 }
 
