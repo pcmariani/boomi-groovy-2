@@ -50,7 +50,7 @@ class TestMapper {
         doc.desc ?: "Document " + m,
         data,
         ddps,
-        getAssertions(doc.assert, test.assert),
+        getAssertions(doc.assertions, test.assertions),
         doc.ext ?: doc.extension ?: test.ext ?: test.extension ?: null
       )
     }
