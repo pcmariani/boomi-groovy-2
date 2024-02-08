@@ -21,9 +21,9 @@ else
 	exit 1
 fi
 
-workingDir="$(pwd)"
-
+# echo "$BOOMI_GROOVY_HOME/src/$scriptName" "$@"
+export COLS="$(tput cols)"
+export WORKING_DIR="$(pwd)"
 pushd "$BOOMI_GROOVY_HOME/src" >/dev/null
-# echo "$BOOMI_GROOVY_HOME/src/$scriptName" --workingDir "$workingDir" "$@"
-groovy "$BOOMI_GROOVY_HOME/src/$scriptName" --workingDir "$workingDir" "$@"
+groovy "$BOOMI_GROOVY_HOME/src/$scriptName" "$@"
 popd >/dev/null
