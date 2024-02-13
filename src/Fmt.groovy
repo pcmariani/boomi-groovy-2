@@ -73,5 +73,92 @@ class Fmt {
     return sb.toString()
   }
 
+
+  static String out(String indent="", ArrayList stringArr=[]) {
+    String NEWLINE = System.lineSeparator()
+    int width = Globals.termWidth - indent.size() - 1
+    StringBuilder sb = new StringBuilder()
+    String outText = ""
+
+    stringArr = [
+      // [Fmt.blue, " prepare to die"],
+      [Fmt.green, "hello my name is inigo montoya: hello my name is inigo montoya: hello my name is inigo montoya"],
+      // [Fmt.red, " you killed my father: you killed my father: you killed my father: you killed my father"],
+    ]
+    int remainder = 0
+    stringArr.eachWithIndex { str, j ->
+      def color = str[0]
+      def text = str[1]
+
+      sb.append(color)
+
+      int segmentStart = 0
+      while (segmentStart < text.size()) {
+
+        def wrapLimit = segmentStart + width - remainder
+        println ""
+        // println "remainder " + remainder
+        println "width " + width
+        println "wrapLimit " + wrapLimit
+        println "textSize " + text.size()
+        // println "segmentStart " + segmentStart
+        // println "segStart + textSize: " + (segmentStart + text.size())
+        // println "segStart + textSize: " + (segmentStart + text.size())
+
+        if (remainder == 0) {
+          println "INDENT"
+          sb.append(indent) 
+          if (text[segmentStart] == " ") {
+            segmentStart += 1
+          }
+        }
+
+        if (indent.size() + text.size() < width) {
+          println "TOO SHORT TO WRAP"
+        }
+        else if (indent.size() + text.size() > wrapLimit) {
+          println "WRAPS WITH MORE LINES"
+        }
+        else if (indent.size() + text.size() > wrapLimit) {
+          println "LAST WRAPPED LINE"
+        }
+
+        if (segmentStart + width - remainder < text.size()) {
+          def segmentEnd = segmentStart + width - remainder
+          println "COND 1"
+          // if (text[segmentEnd-1].contains(" ") && !text[segmentEnd].contains(" ")) {
+          //   // segmentEnd -=1
+          //   // segmentStart -=1
+          // }
+          // println text[segmentStart + width - remainder-1..segmentStart + width - remainder]
+          sb.append(text[segmentStart..segmentEnd] + NEWLINE)
+          segmentStart += width - remainder + 1
+        }
+
+        else {
+          println "COND 2"
+          if (text.size() < remainder) {
+            sb.append(text[segmentStart..text.size()-1])
+            println "LESS"
+            remainder = 0
+            // remainder = text.size() - segmentStart
+            // remainder = width + text.size() - segmentStart
+          } else {
+            sb.append(text[segmentStart..text.size()-1])
+            remainder = text.size() - segmentStart
+          }
+          segmentStart += width
+        }
+        println "remainder " + remainder
+
+      }
+      sb.append(off)
+
+    }
+
+    return sb.toString()
+
+  }
+
 }
 

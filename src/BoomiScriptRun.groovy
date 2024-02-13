@@ -31,10 +31,6 @@ class BoomiScriptRun {
     Globals.setOptionsFromMode("run")
     Globals.debug = options.debug
 
-    def os = System.getProperty("os.name")
-    if (os.contains("Windows")) {
-    }
-
     if (testSuiteFileName) {
       Globals.testSuiteFileName = testSuiteFileName
       TestSuiteRunner testSuiteRunner = new TestSuiteRunner().runTestSuite()

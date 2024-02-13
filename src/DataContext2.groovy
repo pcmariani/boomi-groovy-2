@@ -165,25 +165,12 @@ class DataContext2 {
           }
           else {
             line = line.replaceFirst(/^\s*/,"")
-            println Fmt.wrapText(Fmt.l4, line)
-            // String indent = "           "
-            // int sectionStart = 0
-            // while (sectionStart < line.size()) {
-            //   // println sectionStart
-            //   if (sectionStart + 80 < line.size()) {
-            //     println indent + line[sectionStart..sectionStart+80]
-            //   }
-            //   else {
-            //     println indent + line[sectionStart..line.size()-1]
-            //   }
-            //   sectionStart = sectionStart + 80
-            // }
-            // int section = line.size()
-            // while (section % 80 > 0) {
-            //   println section
-            //   section = section - 80
-            // }
-            // println "   " + Fmt.off + line + Fmt.off
+            // println Fmt.wrapText(Fmt.l4, line)
+            // println Fmt.out(Fmt.l4, Fmt.magenta + line)
+            // println Fmt.out(Fmt.l2, Fmt.blue + line +  " hello " + Fmt.green + line)
+            // println Fmt.out(Fmt.l2, Fmt.blue + line + Fmt.red + " hello " + Fmt.green + line)
+            // println Fmt.out(Fmt.l2, Fmt.blue + line + Fmt.red + " hello " + Fmt.green + line)
+            println Fmt.out(Fmt.l2)
           }
         }
 
@@ -195,11 +182,12 @@ class DataContext2 {
       }
       else if (it.passed) {
         // println Fmt.green + "✓  " +  Fmt.grey + it.assert + Fmt.off
-        println Fmt.green + "   PASS" + Fmt.grey + ":  " +  Fmt.grey + it.assert + Fmt.off
+        // println Fmt.green + "   PASS" + Fmt.grey + ":  " +  Fmt.grey + it.assert + Fmt.off
+        // println Fmt.out(Fmt.l4, [Fmt.green, "PASS", Fmt.grey, ":  ", it.assert, " | " , it.assert, " | ", it.assert].join())
       }
       else if (it.passed == null) {
         // println Fmt.yellow + "✗  " + Fmt.grey + it.assert + Fmt.off + Fmt.yellow + " subject not found." + Fmt.off
-        println Fmt.yellow + "   SKIP" + Fmt.grey + ":  " + Fmt.grey + it.assert + Fmt.off + Fmt.yellow + "  <-- SUBJECT NOT FOUND" + Fmt.off
+        // println Fmt.yellow + "   SKIP" + Fmt.grey + ":  " + Fmt.grey + it.assert + Fmt.off + Fmt.yellow + "  <-- SUBJECT NOT FOUND" + Fmt.off
       }
     }
   }
