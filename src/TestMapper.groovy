@@ -50,7 +50,8 @@ class TestMapper {
         doc.desc ?: "Document " + m,
         data,
         ddps,
-        getAssertions(doc.assertions, test.assertions),
+        getAssertions([doc.assertions, test.assertions]),
+        // getAssertions(doc.assertions, test.assertions),
         doc.ext ?: doc.extension ?: test.ext ?: test.extension ?: null
       )
     }
@@ -188,24 +189,22 @@ class TestMapper {
 
 
 
-  private def getAssertions(docAssertions, testAssertions) {
-    def assertionsArr = []
-    if (testAssertions instanceof String) {
-      assertionsArr << [assert: testAssertions]
-    } else {
-      testAssertions.each{ assertion ->
-        assertionsArr << [assert: assertion]
+  private def getAssertions(assertionsSourcesArr) {
+    def assertionsResultArr = []
+    assertionsSourcesArr.each { assertionsRaw ->
+      // assertionsRaw.each { println it.getClass() }
+      if (assertionsRaw instanceof String) {
+        assertionsRaw = assertionsRaw.toArray()
+      }
+      assertionsRaw.each{ assertion ->
+        if (assertion instanceof LinkedHashMap) {
+          assertionsResultArr << [desc: assertion.desc, assert: assertion.assert]
+        } else {
+          assertionsResultArr << [desc: null, assert: assertion]
+        }
       }
     }
-    if (docAssertions instanceof String) {
-      assertionsArr << [assert: docAssertions]
-    } else {
-      docAssertions.each{ assertion ->
-        assertionsArr << [assert: assertion]
-      }
-    }
-    return assertionsArr
-    // return assertions instanceof String ? [assertions] : assertions
+    return assertionsResultArr
   }
 
 

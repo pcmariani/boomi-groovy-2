@@ -1,6 +1,7 @@
 class DataContext2 {
   ArrayList dataContextArr = []
   int dcIndex = -1
+  int numStores = 0
   // private String scriptName
   Boolean hasFailedAssertions = false
 
@@ -20,6 +21,7 @@ class DataContext2 {
       assertions: assertions,
       extension: extension
     ]
+    // println "STORESTREAM 1 " + dcIndex
   }
 
   void storeStream(InputStream is, Properties props){
@@ -30,9 +32,16 @@ class DataContext2 {
       assertions: this.dataContextArr[dcIndex].assertions,
       extension: this.dataContextArr[dcIndex].extension
     ]
+    numStores++
+    // println numStores
+    // println "STORESTREAM 2 " + dcIndex
   }
 
   int getDataCount(){
+    return dataContextArr.size()
+  }
+
+  int getNumStores() {
     return dataContextArr.size()
   }
 
@@ -89,10 +98,7 @@ class DataContext2 {
 
   def evalAssertions(int index, ExecutionUtilHelper ExecutionUtil) {
     def dc = dataContextArr[index]
-    if (dc.assertions) {
-      // println Fmt.grey + "Assertions:" + Fmt.off
-      // println Fmt.pl("grey","Assertions:")
-    }
+
     dc.assertions.each { assertionObj ->
       String assertion = assertionObj.assert.replaceFirst(/^assert\s+/, "")
       String assertionSubjectVar = ""
@@ -116,7 +122,6 @@ class DataContext2 {
 
       try {
         if (assertionSubjectVar) {
-          // println Fmt.green + "✓  " +  Fmt.grey + assertion + Fmt.off
           Eval.xyz(ExecutionUtil, dc.is, dc.props,
           "def ExecutionUtil = x; InputStream is = y; Properties props = z;"
             + assertionSubjectVar
@@ -126,68 +131,38 @@ class DataContext2 {
           // assertionObj.error = assertion
         }
         else {
-          // println Fmt.yellow + "✗  " + Fmt.grey + assertion + Fmt.off + Fmt.yellow + " subject '$propName' not found." + Fmt.off
           assertionObj.passed = null
           // assertionObj.error = assertion
         }
-      } catch(AssertionError assertionError) {
+      } catch (AssertionError assertionError) {
         this.hasFailedAssertions = true
         assertionObj.passed = false
         assertionObj.error = assertionError.toString().replaceFirst("is.text", "data").take(400)
       }
       dc.is.reset()
     }
+
   }
 
   void printAssertions(int index) {
+    String prefix = "assert "
     dataContextArr[index].assertions.each{ 
-      // println it.passed
       if (it.passed == false) {
-        // println ""
         def errorArr = it.error
             .replaceFirst(/Assertion failed:\s*/, "")
             .replaceFirst("assert ", "")
-            .split("\n")
-        // println errorArr
-        print Fmt.red + "   FAIL" + Fmt.grey + ":  " + Fmt.off
-        errorArr.eachWithIndex { line, ind ->
-          if (ind == 0) println Fmt.red + line + Fmt.off
-          else if (ind == 1) println "   " + Fmt.grey + line + Fmt.off
-          // else println Fmt.red + line + Fmt. off
-          else if (ind == 2) {
-            def lineArr = line.split("\\|")
-            print "   "
-            lineArr.eachWithIndex { item, jnd ->
-              if (jnd == 0) print Fmt.grey + item + "|" + Fmt.off
-              if (jnd == 1) print Fmt.red + item + Fmt.off
-            }
-            println ""
-          }
-          else {
-            line = line.replaceFirst(/^\s*/,"")
-            // println Fmt.wrapText(Fmt.l4, line)
-            // println Fmt.out(Fmt.l4, Fmt.magenta + line)
-            // println Fmt.out(Fmt.l2, Fmt.blue + line +  " hello " + Fmt.green + line)
-            // println Fmt.out(Fmt.l2, Fmt.blue + line + Fmt.red + " hello " + Fmt.green + line)
-            // println Fmt.out(Fmt.l2, Fmt.blue + line + Fmt.red + " hello " + Fmt.green + line)
-            println Fmt.out(Fmt.l2)
-          }
-        }
+            .replaceFirst(/\n$/, "")
+            .split("\n", 2)
 
-        // println Fmt.red + "FAIL  " + Fmt.grey + it.error
-        //     .replaceFirst(/Assertion failed:\s*/, "")
-        //     .replaceFirst("assert", "") +
-        //   Fmt.off
-        // println Fmt.red + it.error + Fmt.off
+        println Fmt.red + "  ✗  " + Fmt.grey + prefix + Fmt.off + errorArr[0]
+        println Fmt.red + errorArr[1].replaceAll(/(^|\n)/, "\$1      ") + Fmt.off
       }
       else if (it.passed) {
-        // println Fmt.green + "✓  " +  Fmt.grey + it.assert + Fmt.off
-        // println Fmt.green + "   PASS" + Fmt.grey + ":  " +  Fmt.grey + it.assert + Fmt.off
-        // println Fmt.out(Fmt.l4, [Fmt.green, "PASS", Fmt.grey, ":  ", it.assert, " | " , it.assert, " | ", it.assert].join())
+        println Fmt.green + "  ✓  " +  Fmt.grey + prefix + Fmt.off + it.assert
       }
       else if (it.passed == null) {
-        // println Fmt.yellow + "✗  " + Fmt.grey + it.assert + Fmt.off + Fmt.yellow + " subject not found." + Fmt.off
-        // println Fmt.yellow + "   SKIP" + Fmt.grey + ":  " + Fmt.grey + it.assert + Fmt.off + Fmt.yellow + "  <-- SUBJECT NOT FOUND" + Fmt.off
+        println Fmt.yellow + "  － " + Fmt.grey + prefix + Fmt.off + it.assert + Fmt.grey + "  <-- not evaluated" + Fmt.off
+        println Fmt.yellow + "             |\n             " + "no DPP or ddp with that name" + Fmt.off
       }
     }
   }
@@ -204,7 +179,11 @@ class DataContext2 {
 
   void printData(int index) {
     def is = this.dataContextArr[index]?.is
-    // println Fmt.yellow + is?.text + Fmt.off
+    // println "INDEX " + index
+    // println this.getDataCount() + " " + this.numStores
+    // if (this.numStores > this.getDataCount()) {
+    //   println Fmt.green + "-"*Globals.termWidth + Fmt.off
+    // }
     println is?.text
     is.reset()
   }
