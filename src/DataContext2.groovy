@@ -177,9 +177,8 @@ class DataContext2 {
   //   is.reset()
   // }
 
-  void printData(int index) {
+  void printData(int index = 0) {
     def is = this.dataContextArr[index]?.is
-    // println "INDEX " + index
     // println this.getDataCount() + " " + this.numStores
     // if (this.numStores > this.getDataCount()) {
     //   println Fmt.green + "-"*Globals.termWidth + Fmt.off

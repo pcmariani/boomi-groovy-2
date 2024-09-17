@@ -33,11 +33,9 @@ class Test {
     }
 
     def ExecutionUtil = new ExecutionUtilHelper()
+    def ExecutionManager = new ExecutionManager(ExecutionUtil)
     ExecutionUtil.dynamicProcessProperties = this.dpps
 
-    // def dataContext = this.dataContext
-
-    // this.scripts.eachWithIndex { scriptObj, k ->
     for (int k = 0; k < this.scripts.size(); k++) {
 
       def scriptObj = this.scripts[k]
@@ -52,14 +50,23 @@ class Test {
         Fmt.pl("grey", " - " + this.desc)
       } 
 
+      // println Globals.workingDir
+
       String script = scriptObj.script.text
         // remove ExecutionUtil import
         .replaceFirst(/import com\.boomi\.execution\.ExecutionUtil;?/, "")
+        .replaceFirst(/import com\.boomi\.execution\.ExecutionManager;?/, "")
+        .replaceAll(/new File\(/, "new File(\"${Globals.workingDir}/\" + ")
 
       if (k == this.scripts.size() - 1) {
+        String evalAssertions_replacement = " \
+                  try { \
+                      dataContext.evalAssertions(i, ExecutionUtil); \
+                  } catch(Exception e) { \
+                      dataContext.evalAssertions(dataContext.getDataCount()-1, ExecutionUtil); \
+                  } ".replaceAll(/\s+/, " ")
         script = script
-          .replaceFirst(/(.*dataContext.storeStream.*)/,
-            "\$1; dataContext.evalAssertions(i, ExecutionUtil); ")
+        .replaceAll(/(.*dataContext.storeStream.*)/, "\$1; $evalAssertions_replacement ")
       }
 
       if ("no println" in optsKeys) {
@@ -76,38 +83,62 @@ class Test {
 
       if ("DPPs" in optsKeys) {
         script = script
-        .replaceFirst(/(.*dataContext.storeStream.*)/,
+        .replaceAll(/(.*dataContext.storeStream.*)/,
         "\$1; ExecutionUtil.printDynamicProcessProperties(\"${opts.DPPs.join(",")}\", true); ")
       }
 
       if ("ddps" in optsKeys) {
-      // if (!out.disjoint(["props", "ddps"])) {
+        String ddps_replacement = " \
+                  try { \
+                       dataContext.printProperties(i, \"${opts.ddps.join(",")}\", true); \
+                  } catch(Exception e) { \
+                       dataContext.printProperties(dataContext.getDataCount()-1, \"${opts.ddps.join(",")}\", true); \
+                  } ".replaceAll(/\s+/, " ")
+        // println ddps_replacement
         script = script
-        .replaceFirst(/(.*dataContext.storeStream.*)/,
-        "\$1; dataContext.printProperties(i, \"${opts.ddps.join(",")}\", true); ")
+        .replaceAll(/(.*dataContext.storeStream.*)/, "\$1; $ddps_replacement")
       }
 
       if ("data" in optsKeys) {
+        String data_replacement = " \
+                  try { \
+                      dataContext.printData(i); \
+                  } catch(Exception e) { \
+                      dataContext.printData(dataContext.getDataCount()-1); \
+                  } ".replaceAll(/\s+/, " ")
         script = script
-        .replaceFirst(/(.*dataContext.storeStream.*)/,
-        "\$1; dataContext.printData(i); ")
+        .replaceAll(/(.*dataContext.storeStream.*)/, "\$1; $data_replacement")
       }
 
       if ("assertions" in optsKeys) {
+        String assertions_replacement = " \
+                  try { \
+                      dataContext.printAssertions(i); \
+                  } catch(Exception e) { \
+                      dataContext.printAssertions(dataContext.getDataCount()-1); \
+                  } ".replaceAll(/\s+/, " ")
         script = script
-        .replaceFirst(/(.*dataContext.storeStream.*)/,
-        "\$1; dataContext.printAssertions(i); ")
+        .replaceAll(/(.*dataContext.storeStream.*)/, "\$1; $assertions_replacement")
       }
 
       if (!("no files" in optsKeys) && k == this.scripts.size() - 1) {
+        String noFiles_replacement = " \
+                  try { \
+                      if (dataContext.getExtension(i)) dataContext.writeFile(i, \"${Globals.workingDir}\", \"$test.desc\", \"$scriptObj.name\"); \
+                  } catch(Exception e) { \
+                      if (dataContext.getExtension(dataContext.getDataCount()-1)) dataContext.writeFile(i, \"${Globals.workingDir}\", \"$test.desc\", \"$scriptObj.name\"); \
+                  } ".replaceAll(/\s+/, " ")
         script = script
-        .replaceFirst(/(.*dataContext.storeStream.*)/,
-        "\$1; if (dataContext.getExtension(i)) dataContext.writeFile(i, \"${Globals.workingDir}\", \"$test.desc\", \"$scriptObj.name\"); ")
+        .replaceAll(/(.*dataContext.storeStream.*)/, "\$1; $noFiles_replacement")
       }
+      // println script
 
       try {
-        Eval.xy(
-          this.dataContext, ExecutionUtil, "def dataContext = x; ExecutionUtil = y; " + script
+        Eval.xyz(
+          this.dataContext,
+          ExecutionUtil,
+          ExecutionManager,
+          "def dataContext = x; ExecutionUtil = y; def ExecutionManager = z; " + script
         )
       } catch(Exception e) {
         StringWriter sw = new StringWriter();

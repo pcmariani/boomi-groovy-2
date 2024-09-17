@@ -106,12 +106,14 @@ class TestMapper {
 
 
   private String getFilenameFromValue(value) {
-    // println value
     def filename = (value =~ /(?s)^\s*(?:@?file)?\s*\(?'?([^@]{1,240}\.[A-Za-z]\w{1,14})'?\)?\s*$/).findAll()*.last()[0]
-    // println "---------- " + filename
     return filename
   }
 
+  private String getFilenameFromValueNeedsAtFilePrefix(value) {
+    def filename = (value =~ /(?s)^\s*@file\s*\(?["']?(.*?)["']?\)?\s*$/).findAll()*.last()[0]
+    return filename
+  }
 
 
   private InputStream getDocumentContents(String data) {
@@ -171,8 +173,9 @@ class TestMapper {
         // println type + " " + propsSubDir
         propertiesPerSource.each { k, v ->
           // println k + " :: " + v
-          def valueFilename = getFilenameFromValue(v)
+          def valueFilename = getFilenameFromValueNeedsAtFilePrefix(v)
           if (valueFilename) {
+            println valueFilename
             // println "filename + " + type + " " + it + " " + valueFilename
             propertiesPerSource.setProperty(k, new FileReader("${Globals.workingDir}/$propsSubDir/$valueFilename").text)
           }

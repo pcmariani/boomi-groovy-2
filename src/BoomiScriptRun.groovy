@@ -7,11 +7,10 @@ class BoomiScriptRun {
 
     cli.with {
       h   longOpt: 'help', 'Show usage'
-      w   longOpt: 'workingDir', args: 1, argName: 'dir', 'Present Working Directory'
       dbg longOpt: 'debug', type: boolean, argName: 'debug', 'Print Debug Info'
-      // s  longOpt: 'script', args: 1, argName: 'script', 'If not using a testsuite file: Script Filename'
-      // d  longOpt: 'document', args: 1, argName: 'document', 'If not using a testsuite file: Document Filename'
-      // p  longOpt: 'properties', args: 1, argName: 'properties', 'If not using a testsuite file: Properties Filename'
+      s  longOpt: 'script', args: 1, argName: 'script', 'If not using a testsuite file: Script Filename'
+      d  longOpt: 'document', args: 1, argName: 'document', 'If not using a testsuite file: Document Filename'
+      p  longOpt: 'properties', args: 1, argName: 'properties', 'If not using a testsuite file: Properties Filename'
       // xd longOpt: 'suppress-data-output', type: boolean, 'Suppress data output (can also be done inside OPTIONS in a testsuite file)'
       // xp longOpt: 'suppress-props-output', type: boolean, 'Suppresses props output (can also be done inside OPTIONS in a testsuite file)'
     }
@@ -25,19 +24,26 @@ class BoomiScriptRun {
 
     Globals Globals = new Globals(options)
 
-    String testSuiteFileName = options.arguments()[0]
-    // Globals.workingDir = options.workingDir ?: System.getProperty("user.dir")
-    Globals.mode = "run"
-    Globals.setOptionsFromMode("run")
-    Globals.debug = options.debug
-
-    if (testSuiteFileName) {
-      Globals.testSuiteFileName = testSuiteFileName
-      TestSuiteRunner testSuiteRunner = new TestSuiteRunner().runTestSuite()
-      // testSuiteRunner.runTestSuite()
+    if (Globals.testSuiteFileName) {
+      TestSuiteRunner tsr = new TestSuiteRunner().runTestSuite()
     }
+
     else {
-      println "Legacy?"
+      String testSuiteText = '''
+        OPTS:
+          - data
+          - DPPs
+          - ddps
+        GLOBALS:
+          DPPs: ''' + options.p + '''
+          scripts:
+            - ''' + options.s + '''
+        Boomi Run:
+          data: ''' + options.d + '''
+          ddps: ''' + options.p + '''
+      '''
+      TestSuite ts = new TestSuite(testSuiteText)
+      ts.run()
     }
 
   }

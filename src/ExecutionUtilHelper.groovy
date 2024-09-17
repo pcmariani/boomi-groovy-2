@@ -1,13 +1,13 @@
 import java.util.logging.Logger;
 
 class ExecutionUtilHelper {
-    static def dynamicProcessProperties = new Properties();
+    static Properties dynamicProcessProperties = new Properties();
 
     static void setDynamicProcessProperty(String key, String value, boolean persist) {
         this.dynamicProcessProperties.setProperty(key, value)
     }
 
-    static def getDynamicProcessProperty(String key) {
+    static String getDynamicProcessProperty(String key) {
         return this.dynamicProcessProperties.getProperty(key)
     }
 
@@ -31,7 +31,16 @@ class ExecutionUtilHelper {
     }
 
     static Logger getBaseLogger() {
-        System.setProperty("java.util.logging.SimpleFormatter.format", "%5\$s %n")
-        return Logger.getAnonymousLogger()
+      System.setProperty("java.util.logging.SimpleFormatter.format", "%5\$s %n")
+      return Logger.getAnonymousLogger()
     }
+
+    static Properties getProperties() {
+      return this.dynamicProcessProperties
+    }
+
+    static String getProcessProperty(String componentId, String propId) {
+      return "PROCESS PROPERTIES NOT IMPLEMENTED YET"
+    }
+
 }

@@ -12,14 +12,18 @@ class TestSuite {
   int numFailedTests
   String testSuiteFileName
 
-  TestSuite() {
+  TestSuite(rawTestSuiteText="") {
     this.testSuiteFileName = Globals.testSuiteFileName
 
     def testSuiteFilePath = "${Globals.workingDir}/${testSuiteFileName}"
 
     // try {
       // if (Globals.testSuiteFileExt == "yaml") {
+    if (!rawTestSuiteText) {
       this.testSuiteFileRaw = new Yaml().load((testSuiteFilePath as File).text)
+    } else {
+      this.testSuiteFileRaw = new Yaml().load(rawTestSuiteText)
+    }
       // } else if (Globals.testSuiteFileExt == "json") {
       //   this.testSuiteFileRaw = new JsonSlurper.parseText((testSuiteFilePath as File).text)
       // }
