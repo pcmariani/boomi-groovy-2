@@ -74,6 +74,11 @@ class Test {
         .replaceAll(/(.*?)println/, "// \$1 println")
       }
 
+      if ("no logger" in optsKeys) {
+        script = script
+        .replaceAll(/(.*?)logger/, "// \$1 logger")
+      }
+
       if (!("no labels" in optsKeys)) {
         script = script
         .replaceFirst(/(.*dataContext.getDataCount\(\).*)/,
