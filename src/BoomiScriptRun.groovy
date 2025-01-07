@@ -29,19 +29,19 @@ class BoomiScriptRun {
     }
 
     else {
+
       String testSuiteText = '''
         OPTS:
           - data
           - DPPs
           - ddps
-        GLOBALS:
-          DPPs: ''' + options.p + '''
-          scripts:
-            - ''' + options.s + '''
         Boomi Run:
-          data: ''' + options.d + '''
-          ddps: ''' + options.p + '''
+          script: ''' + options.s + '''
+          ''' + ( options.p ? "DPPs: " + options.p : "" ) + '''
+          ''' + ( options.p ? "ddps: " + options.p : "" ) + '''
+          ''' + ( options.d ? "data: " + options.d : "" ) + '''
       '''
+
       TestSuite ts = new TestSuite(testSuiteText)
       ts.run()
     }
