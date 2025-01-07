@@ -142,6 +142,9 @@ class TestMapper {
       Properties propertiesPerSource = new Properties()
       String propertiesFilename = getFilenameFromValue(it)
 
+          println "type: $type"
+          println it.getClass()
+          println it
       if (propertiesFilename) {
         BufferedReader reader = new BufferedReader(new FileReader("${Globals.workingDir}/$propertiesFilename"));
         String line
@@ -161,10 +164,22 @@ class TestMapper {
 
       else {
         if (it instanceof String) {
+          if (type == "ddp") {
+            if (!(it =~ /^\s*document\.dynamic\.userdefined\./)) {
+              it = "document.dynamic.userdefined." + it
+            }
+          }
           propertiesPerSource.load(new StringReader(it))
         }
         else if (it instanceof LinkedHashMap) {
-          propertiesPerSource.putAll(it)
+          def propsMap = it.collectEntries{ 
+            def key = it.key
+            if (!(it.key =~ /^\s*document\.dynamic\.userdefined\./)) {
+              key = "document.dynamic.userdefined." + key
+            }
+            [(key),it.value.replaceAll(/\\n/,"\n")]
+          }
+          propertiesPerSource.putAll(propsMap)
         }
       }
 
@@ -175,7 +190,7 @@ class TestMapper {
           // println k + " :: " + v
           def valueFilename = getFilenameFromValueNeedsAtFilePrefix(v)
           if (valueFilename) {
-            println valueFilename
+            // println valueFilename
             // println "filename + " + type + " " + it + " " + valueFilename
             propertiesPerSource.setProperty(k, new FileReader("${Globals.workingDir}/$propsSubDir/$valueFilename").text)
           }
