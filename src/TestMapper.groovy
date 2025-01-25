@@ -17,17 +17,59 @@ class TestMapper {
     def desc = testRaw.key
     def test = testRaw.value
 
-    def dataContext = new DataContext2()
-
-    if (!test.docs && !test.documents) {
-      test.docs = [test.clone()]
-      test.remove("assertions")
-      test.remove("assert")
+    this.index = index
+    this.desc = desc
+    try {
+      this.scripts = getExecutionScripts(test.scripts ?: test.script ?: Globals.scripts)
+    } catch(Exception e) {
+      throw new Exception("Error with scripts: " + e.getMessage())
     }
+    this.dpps = loadProperties("DPP", [Globals.DPPs, test.DPPs, Globals.DPPsOverride, test.DPPsOverride])
 
-    test.docs.eachWithIndex { doc, m ->
+    def tfd = test.testfilesDir ?: Globals.testFilesDir
+    this.testfilesDir = tfd
 
-      def tfd = doc.testfilesDir ?: Globals.testFilesDir
+    def dataContext = new DataContext2()
+    this.dataContext = dataContext
+
+
+
+    // test.remove("data")
+    // test.remove("ddps")
+    test.remove("DPPs")
+    test.remove("script")
+    test.remove("scripts")
+    test.remove("DPPsOverride")
+    // test.remove("docs")
+    // println test
+
+    // println "--------------"
+
+    ArrayList documents = []
+
+    test.each { docRaw ->
+      String docDesc = docRaw.key
+      LinkedHashMap doc = docRaw.value
+      documents << [
+        desc: docDesc, // + ": " + doc.data.replaceFirst(/^\.\//,""),
+        data: doc.data,
+        ddps: doc.ddps
+      ]
+    }
+    // println documents
+    // println test
+
+
+    // if (!test.docs && !test.documents) {
+    //   test.docs = [test.clone()]
+    //   test.remove("assertions")
+    //   test.remove("assert")
+    // }
+
+    documents.eachWithIndex { doc, m ->
+
+      // println doc
+      // def doc_tfd = doc.testfilesDir ?: Globals.testFilesDir
 
       InputStream data
       // try {
@@ -56,18 +98,6 @@ class TestMapper {
       )
     }
 
-    def tfd = test.testfilesDir ?: Globals.testFilesDir
-
-    this.index = index
-    this.desc = desc
-    try {
-      this.scripts = getExecutionScripts(test.scripts ?: test.script ?: Globals.scripts)
-    } catch(Exception e) {
-      throw new Exception("Error with scripts: " + e.getMessage())
-    }
-    this.dpps = loadProperties("DPP", [Globals.DPPs, test.DPPs, Globals.DPPsOverride, test.DPPsOverride])
-    this.dataContext = dataContext
-    this.testfilesDir = tfd
   }
 
 
@@ -142,9 +172,6 @@ class TestMapper {
       Properties propertiesPerSource = new Properties()
       String propertiesFilename = getFilenameFromValue(it)
 
-          println "type: $type"
-          println it.getClass()
-          println it
       if (propertiesFilename) {
         BufferedReader reader = new BufferedReader(new FileReader("${Globals.workingDir}/$propertiesFilename"));
         String line
@@ -174,8 +201,10 @@ class TestMapper {
         else if (it instanceof LinkedHashMap) {
           def propsMap = it.collectEntries{ 
             def key = it.key
-            if (!(it.key =~ /^\s*document\.dynamic\.userdefined\./)) {
-              key = "document.dynamic.userdefined." + key
+            if (type == "ddp") {
+              if (!(it.key =~ /^\s*document\.dynamic\.userdefined\./)) {
+                key = "document.dynamic.userdefined." + key
+              }
             }
             [(key),it.value.replaceAll(/\\n/,"\n")]
           }

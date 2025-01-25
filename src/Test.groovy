@@ -82,7 +82,8 @@ class Test {
       if (!("no labels" in optsKeys)) {
         script = script
         .replaceFirst(/(.*dataContext.getDataCount\(\).*)/,
-        "\$1; if (dataContext.getDataCount() > 1) println \"${Fmt.blue}DOCUMENT \" + i.toString() + \"${Fmt.off}\"")
+        // "\$1; if (dataContext.getDataCount() > 1) println \"${Fmt.blue}DOCUMENT \" + i.toString() + \"${Fmt.off}\"")
+        "\$1; if (dataContext.getDataCount() > 1) println \"${Fmt.magenta}--- \" + dataContext.getDesc(i) + \" ---${Fmt.off}\"")
         // "\$1; if (dataContext.getDataCount() > 1) println \"${Fmt.blue}DOCUMENT\" + i.toString() + \": ${Fmt.magenta}\" + dataContext.getDesc(i) + \"${Fmt.off}\"")
       }
 
