@@ -19,12 +19,29 @@ class TestMapper {
 
     this.index = index
     this.desc = desc
+
+    // try {
+    //   this.scripts = getExecutionScripts(test.scripts ?: test.script ?: Globals.scripts)
+    // } catch(Exception e) {
+    //   throw new Exception("Error with scripts: " + e.getMessage())
+    // }
+
     try {
-      this.scripts = getExecutionScripts(test.scripts ?: test.script ?: Globals.scripts)
+      def testScripts = test.find{ it.key =~ /(?i)^scripts?$/ } ?: [:]
+      if (testScripts) {
+        test.remove(testScripts.key)
+      }
+      this.scripts = getExecutionScripts(testScripts.value ?: Globals.scripts)
     } catch(Exception e) {
       throw new Exception("Error with scripts: " + e.getMessage())
     }
-    this.dpps = loadProperties("DPP", [Globals.DPPs, test.DPPs, Globals.DPPsOverride, test.DPPsOverride])
+
+
+    def testDPPs =  test.find{ it.key =~ /(?i)^dpps$/ } ?: [:]
+    if (testDPPs) {
+      test.remove(testDPPs.key)
+    } 
+    this.dpps = loadProperties("DPP", [Globals.DPPs, testDPPs.value, Globals.DPPsOverride, test.DPPsOverride])
 
     def tfd = test.testfilesDir ?: Globals.testFilesDir
     this.testfilesDir = tfd
@@ -36,7 +53,6 @@ class TestMapper {
 
     // test.remove("data")
     // test.remove("ddps")
-    test.remove("DPPs")
     test.remove("script")
     test.remove("scripts")
     test.remove("DPPsOverride")
@@ -141,7 +157,9 @@ class TestMapper {
   }
 
   private String getFilenameFromValueNeedsAtFilePrefix(value) {
-    def filename = (value =~ /(?s)^\s*@file\s*\(?["']?(.*?)["']?\)?\s*$/).findAll()*.last()[0]
+    // def filename = (value =~ /(?s)^\s*@file\s*\(?["']?(.*?)["']?\)?\s*$/).findAll()*.last()[0]
+    def filename = (value =~ /^\.?[_\$\?\/\\](?:file)?\s*(.*)/).findAll()*.last()[0]
+    println filename
     return filename
   }
 
@@ -162,6 +180,24 @@ class TestMapper {
     }
   }
 
+  private Properties loadPropertiesFromFile(type, propertiesFilename) {
+    Properties resultProperties = new Properties()
+    BufferedReader reader = new BufferedReader(new FileReader("${Globals.workingDir}/$propertiesFilename"));
+    String line
+    while ((line = reader.readLine()) != null) {
+      def propArr = line.split(/\s*=\s*/, 2)
+      if (line && !(line =~ /^\s*#/)) {
+        if      (type == "DPP" && !(line =~ /^\s*document\.dynamic\.userdefined\./)) {
+          resultProperties.load(new StringReader(line))
+        }
+        else if (type == "ddp" &&  (line =~ /^\s*document\.dynamic\.userdefined\./)) {
+          resultProperties.load(new StringReader(line))
+        }
+      }
+    }
+    reader.close();
+    return resultProperties
+  }
 
 
   private Properties loadProperties(type, propsSourcesArr) {
@@ -173,20 +209,7 @@ class TestMapper {
       String propertiesFilename = getFilenameFromValue(it)
 
       if (propertiesFilename) {
-        BufferedReader reader = new BufferedReader(new FileReader("${Globals.workingDir}/$propertiesFilename"));
-        String line
-        while ((line = reader.readLine()) != null) {
-          def propArr = line.split(/\s*=\s*/, 2)
-          if (line && !(line =~ /^\s*#/)) {
-            if      (type == "DPP" && !(line =~ /^\s*document\.dynamic\.userdefined\./)) {
-              propertiesPerSource.load(new StringReader(line))
-            }
-            else if (type == "ddp" &&  (line =~ /^\s*document\.dynamic\.userdefined\./)) {
-              propertiesPerSource.load(new StringReader(line))
-            }
-          }
-        }
-        reader.close();
+        propertiesPerSource = loadPropertiesFromFile(type, propertiesFilename)
       }
 
       else {
@@ -201,12 +224,18 @@ class TestMapper {
         else if (it instanceof LinkedHashMap) {
           def propsMap = it.collectEntries{ 
             def key = it.key
-            if (type == "ddp") {
-              if (!(it.key =~ /^\s*document\.dynamic\.userdefined\./)) {
-                key = "document.dynamic.userdefined." + key
-              }
+            def value = it.value.toString()
+            if (key ==~ /^\.?[_\$\?\/\\](?:file)?/) {
+              loadPropertiesFromFile(type, value)
             }
-            [(key),it.value.replaceAll(/\\n/,"\n")]
+            else {
+              if (type == "ddp") {
+                if (!(key =~ /^\s*document\.dynamic\.userdefined\./)) {
+                  key = "document.dynamic.userdefined." + key
+                }
+              }
+              [(key), value.replaceAll(/\\n/,"\n")]
+            }
           }
           propertiesPerSource.putAll(propsMap)
         }

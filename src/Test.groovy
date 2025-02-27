@@ -18,6 +18,9 @@ class Test {
   }
 
   def run() {
+    String label_prefix = ""
+    String label_infix = ": __"
+    String label_suffix = "__"
     def outg = Globals.options ?: []
     LinkedHashMap globalOpts = Globals.optsMap ?: []
     ArrayList globalOptsKeys = globalOpts.keySet()
@@ -28,8 +31,8 @@ class Test {
         println Fmt.green + ("-"*Globals.termWidth) + Fmt.off
         println ""
       }
-      Fmt.p("blue", "TEST: ")
-      Fmt.pl("blue", this.desc)
+      Fmt.p("yellow", label_prefix + "TEST" + label_infix)
+      Fmt.pl("yellow", this.desc + label_suffix)
     }
 
     def ExecutionUtil = new ExecutionUtilHelper()
@@ -46,7 +49,7 @@ class Test {
 
       if (this.scripts.size() > 1 && !("no labels" in optsKeys)) {
         println ""
-        Fmt.p("magenta", scriptObj.name)
+        Fmt.p("magenta", label_prefix + "SCRIPT" + label_infix + scriptObj.name + label_suffix)
         Fmt.pl("grey", " - " + this.desc)
       } 
 
@@ -83,7 +86,7 @@ class Test {
         script = script
         .replaceFirst(/(.*dataContext.getDataCount\(\).*)/,
         // "\$1; if (dataContext.getDataCount() > 1) println \"${Fmt.blue}DOCUMENT \" + i.toString() + \"${Fmt.off}\"")
-        "\$1; if (dataContext.getDataCount() > 1) println \"${Fmt.magenta}--- \" + dataContext.getDesc(i) + \" ---${Fmt.off}\"")
+        "\$1; if (dataContext.getDataCount() > 1) println \"${Fmt.blue}${label_prefix}DOCUMENT${label_infix}\" + dataContext.getDesc(i) + \"${label_suffix}${Fmt.off}\"")
         // "\$1; if (dataContext.getDataCount() > 1) println \"${Fmt.blue}DOCUMENT\" + i.toString() + \": ${Fmt.magenta}\" + dataContext.getDesc(i) + \"${Fmt.off}\"")
       }
 

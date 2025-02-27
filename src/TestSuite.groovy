@@ -37,23 +37,55 @@ class TestSuite {
     //   // throw new Exception("BAD YAML")
     // }
 
-
-    // Globals.options.addAll(testSuiteFileRaw.remove('OPTIONS') ?: testSuiteFileRaw.remove('OPTS')?: [])
-    def optsRaw = testSuiteFileRaw.remove('OPTIONS') ?: testSuiteFileRaw.remove('OPTS')?: []
-    // Globals.optsMap.putAll(setOpts(optsRaw))
-    Globals.optsMap.putAll(OptsHelper.processOpts(optsRaw))
+    def optsRaw = testSuiteFileRaw.find{ it.key =~ /(?i)^_?opt[a-z]*s$/ }
+    if (optsRaw) {
+      testSuiteFileRaw.remove(optsRaw.key)
+      Globals.optsMap.putAll(OptsHelper.processOpts(optsRaw.value))
+    }
+    else {
+      throw new Exception("No Options found. Please include '_OPTS' at the top of your test file.")
+    }
     // println Globals.optsMap
 
-    // Globals.options.addAll(optsRaw)
+    // LinkedHashMap g = testSuiteFileRaw.remove('GLOBALS') ?: testSuiteFileRaw.remove('GLOBAL') ?: [:]
+
+    def globalsRaw = testSuiteFileRaw.find{ it.key =~ /(?i)^_?globals$/ }
+    if (globalsRaw) {
+      testSuiteFileRaw.remove(globalsRaw.key)
+      def g = globalsRaw.value
+      // def scripts = g.scripts ?: g.script
+
+      def scripts = g.find{ it.key =~ /(?i)^scripts?$/ } ?: [:]
+      if (scripts) {
+        // g.remove(scripts.key)
+        Globals.scripts = scripts.value instanceof String ? [scripts.value] : scripts.value
+      }
+
+      def dpps = g.find{ it.key =~ /(?i)^dpps$/ } ?: [:]
+      if (dpps) {
+        // testSuiteFileRaw.remove(dpps.key)
+        Globals.DPPs = dpps.value
+      }
 
 
-    LinkedHashMap g = testSuiteFileRaw.remove('GLOBALS') ?: testSuiteFileRaw.remove('GLOBAL') ?: [:]
-    def scripts = g.scripts ?: g.script
+      // Globals.scripts = scripts instanceof String ? [scripts] : scripts
+      // Globals.DPPs = g.DPPs ?: g.dpps
+      // Globals.DPPsOverride = g.DPPsOverride ?: g.dppsOverride
+      // Globals.testFilesDir = g.testFilesDir ?: "."
+    }
 
-    Globals.scripts = scripts instanceof String ? [scripts] : scripts
-    Globals.DPPs = g.DPPs ?: g.dpps
-    Globals.DPPsOverride = g.DPPsOverride ?: g.dppsOverride
-    Globals.testFilesDir = g.testFilesDir ?: "."
+
+    def scripts = testSuiteFileRaw.find{ it.key =~ /(?i)^scripts?$/ } ?: [:]
+    if (scripts) {
+      testSuiteFileRaw.remove(scripts.key)
+      Globals.scripts = scripts.value instanceof String ? [scripts.value] : scripts.value
+    }
+
+    def dpps = testSuiteFileRaw.find{ it.key =~ /(?i)^dpps$/ } ?: [:]
+    if (dpps) {
+      testSuiteFileRaw.remove(dpps.key)
+      Globals.DPPs = dpps.value
+    }
 
     // Globals.class.getDeclaredFields().each {println it.getName() + " " + Globals."${it.getName()}"}
 
