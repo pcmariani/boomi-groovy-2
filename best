@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-usage="Usage: b (run|test|init) <args>"
+usage="Usage: boomirun <args>"
 
 if [[ $# -eq 0 ]]; then
 	echo "$usage"
@@ -8,20 +8,6 @@ if [[ $# -eq 0 ]]; then
 fi
 
 scriptName="BoomiScriptRun.groovy"
-
-# if [ "$1" == "run" ]; then
-# 	scriptName="BoomiScriptRun.groovy"
-# 	shift
-# elif [ "$1" == "test" ]; then
-# 	scriptName="BoomiScriptTest.groovy"
-# 	shift
-# elif [ "$1" == "init" ]; then
-# 	scriptName="BoomiScriptInit.groovy"
-# 	shift
-# else
-# 	echo "$usage"
-# 	exit 1
-# fi
 
 # echo "$BOOMI_GROOVY_HOME/src/$scriptName" "$@"
 export COLS="$(tput cols)"
