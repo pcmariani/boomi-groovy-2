@@ -1,21 +1,19 @@
-OPTIONS:
+_OPTS:
   - data
   - ddps
   - DPPs
   # - assertions
-  # - no labels
   # - no println
-  # - no files
+  # - no logger
+  # - no labels
 
-GLOBALS:
-  scripts:
-    -  ###script
-  DPPs:
-    DPP_Hello: world
-# ---
+SCRIPTS:
+  - ###script
 
-Test 1:
-  DPPs: ###props
-  docs:
-    - data: ###data
-      ddps: ###props
+# --------
+
+'Test 1':
+  DPPs: ###DPPs
+  'Doc1':
+    data: ###data
+    ddps: ###ddps
