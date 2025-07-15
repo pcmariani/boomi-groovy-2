@@ -18,7 +18,7 @@ for( int i = 0; i < dataContext.getDataCount(); i++ ) {
 
     def root = new JsonSlurper().parse(is)
 
-    def outdata = prettyJson(root)
+    def outData = prettyJson(root)
        
     is = new ByteArrayInputStream(outData.getBytes("UTF-8"));
     dataContext.storeStream(is, props);
