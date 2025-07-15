@@ -183,7 +183,7 @@ class DataContext2 {
     // if (this.numStores > this.getDataCount()) {
     //   println Fmt.green + "-"*Globals.termWidth + Fmt.off
     // }
-    println is?.text
+    println is?.text.replaceFirst(/(?s)\n$/,"") + "\n"
     is.reset()
   }
 
@@ -212,8 +212,10 @@ class DataContext2 {
       }
       else {
         dc?.props.each { key, val ->
-          if (val =~ /^[\[\{]/) {
-            val = Fmt.toPrettyJson(val)
+          if (val =~ /^[\[\{].*[\]\}]$/) {
+            try {
+              val = Fmt.toPrettyJson(val)
+            } catch (Exception ignored) {}
           }
           println Fmt.green + key.replaceFirst("document.dynamic.userdefined.","") + Fmt.blue + ": " + Fmt.off + val
         }

@@ -49,7 +49,20 @@ class TestMapper {
     def dataContext = new DataContext2()
     this.dataContext = dataContext
 
-
+    def unnamedDocumentOnTest = [:]
+    def testData =  test.find{ it.key =~ /(?i)^data$/ } ?: [:]
+    if (testData) {
+      unnamedDocumentOnTest["data"] = testData.value
+      test.remove(testData.key)
+    }
+    def testDdps =  test.find{ it.key =~ /(?i)^ddps$/ } ?: [:]
+    if (testDdps) {
+      unnamedDocumentOnTest["ddps"] = testDdps.value
+      test.remove(testDdps.key)
+    }
+    if (unnamedDocumentOnTest) {
+      test['unnamedDocumentOnTest'] = unnamedDocumentOnTest
+    }
 
     // test.remove("data")
     // test.remove("ddps")
@@ -159,7 +172,7 @@ class TestMapper {
   private String getFilenameFromValueNeedsAtFilePrefix(value) {
     // def filename = (value =~ /(?s)^\s*@file\s*\(?["']?(.*?)["']?\)?\s*$/).findAll()*.last()[0]
     def filename = (value =~ /^\.?[_\$\?\/\\](?:file)?\s*(.*)/).findAll()*.last()[0]
-    println filename
+    // println filename
     return filename
   }
 

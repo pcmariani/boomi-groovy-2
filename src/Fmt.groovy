@@ -11,30 +11,39 @@ class Fmt {
   static String l5 = "            "
   static String l6 = "              "
 
-  static String red =           "${(char)27}[31m"
-  static String green =         "${(char)27}[32m"
-  static String yellow =        "${(char)27}[33m"
-  static String blue =          "${(char)27}[34m"
-  static String magenta =       "${(char)27}[35m"
-  static String cyan =          "${(char)27}[36m"
-  static String grey =          "${(char)27}[90m"
-  static String white =         "${(char)27}[97m"
-  static String redReverse =    "${(char)27}[31;7m"
-  static String greenReverse =  "${(char)27}[32;7m"
-  static String off =           "${(char)27}[39;49;27m"
+  static String red             = "${(char)27}[31m"
+  static String green           = "${(char)27}[32m"
+  static String yellow          = "${(char)27}[0;33m"
+  // static String yellowOnGrey    = "${(char)27}[2;33;40m"
+  static String yellowOnGrey    = "${(char)27}[37m"
+  static String blue            = "${(char)27}[34m"
+  static String blueOnGrey      = "${(char)27}[37m"
+  static String magenta         = "${(char)27}[35m"
+  static String magentaOnGrey   = "${(char)27}[37m"
+  static String cyan            = "${(char)27}[36m"
+  static String grey            = "${(char)27}[90m"
+  static String white           = "${(char)27}[97m"
+  static String redReverse      = "${(char)27}[31;7m"
+  static String blueReverse     = "${(char)27}[34;7m"
+  static String greyReverse     = "${(char)27}[37;7m"
+  static String greenReverse    = "${(char)27}[32;7m"
+  static String magentaReverse  = "${(char)27}[35;7m"
+  static String off             = "${(char)27}[0;39;49;27m"
 
   static colors = [
-    red:          red,
-    green:        green,
-    yellow:       yellow,
-    blue:         blue,
-    magenta:      magenta,
-    cyan:         cyan,
-    grey:         grey,
-    white:        white,
-    redReverse:   redReverse,
-    greenReverse: greenReverse,
-    off:          off
+    red:             red,
+    green:           green,
+    yellow:          yellow,
+    blue:            blue,
+    magenta:         magenta,
+    cyan:            cyan,
+    grey:            grey,
+    white:           white,
+    redReverse:      redReverse,
+    blueReverse:     redReverse,
+    greenReverse:    greenReverse,
+    magentaReverse:  greenReverse,
+    off:             off
   ]
 
   static void pl(def color, def str) {
