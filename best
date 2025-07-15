@@ -1,17 +1,14 @@
 #!/usr/bin/env bash
 
-usage="Usage: boomirun <args>"
+# usage="Usage: boomirun <args>"
+#
+# if [[ $# -eq 0 ]]; then
+# 	echo "$usage"
+# 	exit 1
+# fi
 
-if [[ $# -eq 0 ]]; then
-	echo "$usage"
-	exit 1
-fi
-
-scriptName="BoomiScriptRun.groovy"
-
-# echo "$BOOMI_GROOVY_HOME/src/$scriptName" "$@"
 export COLS="$(tput cols)"
 export WORKING_DIR="$(pwd)"
 pushd "$BOOMI_GROOVY_HOME/src" >/dev/null
-groovy "$BOOMI_GROOVY_HOME/src/$scriptName" "$@"
+groovy "$BOOMI_GROOVY_HOME/src/Best.groovy" "$@"
 popd >/dev/null
