@@ -167,26 +167,14 @@ class BoomiScriptRun {
     }
 
     if (Globals.testSuiteFileName) {
+      println ""
       TestSuiteRunner tsr = new TestSuiteRunner().runTestSuite()
+      println ""
     }
 
     else {
-
-      String testSuiteText = '''
-        OPTS:
-          - data
-          - DPPs
-          - ddps
-        Boomi Run:
-          script: ''' + options.s + '''
-          ''' + ( options.p ? "DPPs: " + options.p : "" ) + '''
-          document 0
-            ''' + ( options.p ? "ddps: " + options.p : "" ) + '''
-            ''' + ( options.d ? "data: " + options.d : "" ) + '''
-      '''
-
-      TestSuite ts = new TestSuite(testSuiteText)
-      ts.run()
+      TestSuiteRunner testSuiteRunner = new TestSuiteRunner()
+      testSuiteRunner.discoverAndRunTestSuites()
     }
 
   }

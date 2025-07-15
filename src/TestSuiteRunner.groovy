@@ -2,11 +2,28 @@ class TestSuiteRunner {
   ArrayList resultsTestSuites = []
 
   public void discoverAndRunTestSuites(String folder) {
+    def suitesArr = []
+
     new File(Globals.workingDir).traverse(type: groovy.io.FileType.FILES, nameFilter: ~/.*.yaml/) {
-      Globals.workingDir = it.getParent()
-      Globals.testSuiteFileName = it.getName()
+      suitesArr << [
+        workingDir: it.getParent(),
+        testSuiteFileName: it.getName()
+      ]
+    }
+
+    suitesArr.reverse().each {
+      if (suitesArr.size() > 1) {
+        String testSuiteName = it.workingDir.replaceFirst(Globals.workingDir, "") + "/" + it.testSuiteFileName
+        String testSuiteLabel = (" TESTSUITE: " + testSuiteName + " ").replaceFirst(/: \//, ": ")
+        String sideFill = "=" * ( (Globals.termWidth - testSuiteLabel.size()) / 2 )
+        println "${Fmt.magenta}${sideFill}${testSuiteLabel}${sideFill}${Fmt.off}\n"
+      }
+
+      Globals.workingDir = it.workingDir
+      Globals.testSuiteFileName = it.testSuiteFileName
       runTestSuite()
     }
+
   }
 
   public void runTestSuite() {

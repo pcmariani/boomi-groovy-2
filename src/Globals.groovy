@@ -2,6 +2,7 @@ class Globals {
 
   static String os
   static Boolean debug
+  static String homeDir
   static String workingDir
   static String testSuiteFileName
   static String mode
@@ -23,6 +24,7 @@ class Globals {
 
     this.os = System.getProperty("os.name")
     if (!os.contains("Windows")) {
+      this.homeDir = System.getenv('HOME')
       this.termWidth = System.getenv('COLS') as int
       this.workingDir = System.getenv('WORKING_DIR')
     }
